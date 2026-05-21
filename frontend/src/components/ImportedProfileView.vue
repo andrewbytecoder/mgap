@@ -161,12 +161,28 @@ function shorten(value: string): string {
   </div>
 
   <!-- Goroutine Stacks -->
-  <div v-if="metric === 'goroutine' && props.data.stacks?.length" class="stacks-section">
+  <div v-if="metric === 'goroutine'" class="stacks-section">
     <div class="stacks-header">
       <span>Goroutine Stacks</span>
-      <span class="stacks-count">{{ props.data.stacks.length }} unique stack(s)</span>
+      <span class="stacks-count">{{ props.data.stacks?.length || 0 }} unique stack(s)</span>
     </div>
+
+    <!-- Diagnostic info -->
     <div class="stacks-list">
+      <div class="stack-card" style="background:rgba(216,110,63,0.08);border-color:rgba(216,110,63,0.2)">
+        <div class="stack-count" style="color:#b55a2e">Diagnostic</div>
+        <div class="stack-frames">
+          <div class="stack-frame">
+            <span class="frame-func mono">stacks={{ JSON.stringify(props.data.stacks?.length ?? 'undefined') }}</span>
+          </div>
+          <div class="stack-frame">
+            <span class="frame-func mono">rawText={{ JSON.stringify(props.data.rawText ? 'present(' + props.data.rawText.length + ' chars)' : 'missing') }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div v-if="props.data.stacks?.length" class="stacks-list">
       <div v-for="(stack, idx) in props.data.stacks" :key="idx" class="stack-card">
         <div class="stack-count">{{ stack.count }} goroutine(s)</div>
         <div class="stack-frames">
@@ -176,6 +192,12 @@ function shorten(value: string): string {
           </div>
         </div>
       </div>
+    </div>
+
+    <!-- Raw Text (browser-like view) -->
+    <div v-if="props.data.rawText" class="raw-text-section">
+      <div class="raw-text-header">Raw Profile Text (browser view)</div>
+      <pre class="raw-text-content">{{ props.data.rawText }}</pre>
     </div>
   </div>
 </template>
@@ -329,6 +351,34 @@ function shorten(value: string): string {
 .frame-location {
   color: #56665d;
   font-size: 11px;
+}
+
+.raw-text-section {
+  border-top: 1px solid rgba(48, 74, 61, 0.12);
+}
+
+.raw-text-header {
+  padding: 10px 16px;
+  background: #eef0e7;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #304a3d;
+}
+
+.raw-text-content {
+  margin: 0;
+  padding: 12px 16px;
+  font-size: 11px;
+  line-height: 1.6;
+  color: #142018;
+  background: rgba(48, 74, 61, 0.03);
+  overflow-x: auto;
+  white-space: pre;
+  max-height: 500px;
+  overflow-y: auto;
+  font-family: 'Cascadia Code', 'Fira Code', 'JetBrains Mono', Consolas, monospace;
 }
 
 @media (max-width: 1200px) {

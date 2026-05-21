@@ -61,9 +61,9 @@ func (a *App) AvailableMetrics() []app.MetricInfo {
 
 func (a *App) AppInfo() map[string]string {
 	return map[string]string{
-		"name":        "live-pprof",
-		"description": "Desktop pprof monitor built with Wails, Vue 3, TypeScript and Vuetify.",
-		"stack":       strings.Join([]string{"Wails", "Vue 3", "TypeScript", "Vuetify"}, " + "),
+		"name":        "MGAP",
+		"description": "Desktop pprof monitor go application pprof.",
+		"stack":       strings.Join([]string{"go", "live", "pprof"}, " + "),
 		"hint":        fmt.Sprintf("Enter a pprof endpoint manually, such as %s", "http://localhost:6060/debug/pprof"),
 	}
 }

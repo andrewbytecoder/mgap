@@ -32,6 +32,7 @@ export interface MetricsSnapshot {
   total: number
   items: MetricPoint[]
   stacks?: GoroutineStack[]
+  rawText?: string
 }
 
 export interface ProfileMeta {
@@ -70,6 +71,7 @@ export interface GraphData {
   imported: boolean
   sourceLabel?: string
   stacks?: GoroutineStack[]
+  rawText?: string
 }
 
 export interface GraphPreference {

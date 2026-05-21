@@ -54,8 +54,8 @@ function metricSummary(metric: MetricKey): string {
 
         <section class="hero">
           <div class="hero-copy">
+            <h1>MGAP</h1>
             <p class="eyebrow">monitor go app pprof</p>
-            <h1>live-pprof</h1>
             <p class="hero-text">
               Track heap, allocs, CPU and goroutine profiles from a desktop app instead of juggling a browser tab and a
               local web server.

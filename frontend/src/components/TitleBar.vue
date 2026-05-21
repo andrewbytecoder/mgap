@@ -78,7 +78,7 @@ onUnmounted(() => {
 <template>
   <div class="titlebar">
     <div class="titlebar-drag-region" @mousedown="onMouseDown">
-      <div class="titlebar-title">live-pprof</div>
+      <div class="titlebar-title">MGAP</div>
     </div>
     <div class="titlebar-buttons">
       <button class="titlebar-button" @click="WindowMinimise" title="最小化">

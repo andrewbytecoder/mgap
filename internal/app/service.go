@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"net/url"
 	"slices"
@@ -48,6 +49,7 @@ type MetricsSnapshot struct {
 	Total     int64            `json:"total"`
 	Items     []MetricPoint    `json:"items"`
 	Stacks    []GoroutineStack `json:"stacks,omitempty"`
+	RawText   string           `json:"rawText,omitempty"`
 }
 
 type EndpointResult struct {
@@ -230,9 +232,18 @@ func (s *Service) FetchMetrics(parent context.Context, input string, metric stri
 	}
 
 	var stacks []GoroutineStack
+	var rawText string
 	if metricType == metrics.MetricsTypeGoroutine && rawData != nil {
 		if parsed, err := parseGoroutineStacks(rawData); err == nil {
 			stacks = parsed
+		} else {
+			log.Printf("[goroutine stacks] parse error: %v", err)
+		}
+		if text, err := generateGoroutineText(rawData); err == nil {
+			rawText = text
+		} else {
+			rawText = fmt.Sprintf("generate text error: %v\n\n--- raw data (first 2KB) ---\n%s", err, truncateBytes(rawData, 2048))
+			log.Printf("[goroutine text] generate error: %v", err)
 		}
 	}
 
@@ -243,6 +254,7 @@ func (s *Service) FetchMetrics(parent context.Context, input string, metric stri
 		Total:     resp.Total,
 		Items:     items,
 		Stacks:    stacks,
+		RawText:   rawText,
 	}, nil
 }
 
