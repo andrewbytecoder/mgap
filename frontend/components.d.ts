@@ -8,6 +8,7 @@ export {}
 /* prettier-ignore */
 declare module 'vue' {
   export interface GlobalComponents {
+    ImportedProfileView: typeof import('./src/components/ImportedProfileView.vue')['default']
     MetricChart: typeof import('./src/components/MetricChart.vue')['default']
   }
 }
