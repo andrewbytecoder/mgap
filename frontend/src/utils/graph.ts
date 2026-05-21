@@ -23,8 +23,8 @@ export function importedGraphData(snapshot: MetricsSnapshot, metric: MetricKey, 
       points: [
         {
           date,
-          flat: normalizeMetricValue(metric, item.flat, cpuProfileSeconds),
-          cum: normalizeMetricValue(metric, item.cum, cpuProfileSeconds)
+          flat: normalizeMetricValue(metric, item.flat, cpuProfileSeconds, snapshot.total),
+          cum: normalizeMetricValue(metric, item.cum, cpuProfileSeconds, snapshot.total)
         }
       ]
     }
@@ -157,8 +157,8 @@ export function appendGraphData(
     const line = next.lineTable[key]
     line.points[line.points.length - 1] = {
       date,
-      flat: normalizeMetricValue(metric, item.flat, cpuProfileSeconds),
-      cum: normalizeMetricValue(metric, item.cum, cpuProfileSeconds)
+      flat: normalizeMetricValue(metric, item.flat, cpuProfileSeconds, snapshot.total),
+      cum: normalizeMetricValue(metric, item.cum, cpuProfileSeconds, snapshot.total)
     }
   }
 
@@ -167,16 +167,25 @@ export function appendGraphData(
     const lastPoint = totalLine.points[totalLine.points.length - 1]
     totalLine.points[totalLine.points.length - 1] = {
       ...lastPoint,
-      flat: normalizeMetricValue(metric, snapshot.total, cpuProfileSeconds),
-      cum: normalizeMetricValue(metric, snapshot.total, cpuProfileSeconds)
+      flat: normalizeMetricValue(metric, snapshot.total, cpuProfileSeconds, snapshot.total),
+      cum: normalizeMetricValue(metric, snapshot.total, cpuProfileSeconds, snapshot.total)
     }
   }
 
   return next
 }
 
-function normalizeMetricValue(metric: MetricKey, value: number, cpuProfileSeconds: number): number {
+function normalizeMetricValue(metric: MetricKey, value: number, cpuProfileSeconds: number, cpuTotal: number): number {
   if (metric !== 'cpu') return value
   const seconds = Math.max(cpuProfileSeconds, 1)
-  return (value / (seconds * 1_000_000_000)) * 100
+
+  // CPU profiles may come back either as sampled counts or as CPU nanoseconds.
+  // Counts are usually in the tens/hundreds range per second, while nanoseconds are huge.
+  if (cpuTotal > seconds * 100_000) {
+    return (value / (seconds * 1_000_000_000)) * 100
+  }
+
+  // With Go's default 100Hz CPU sampling, one fully busy core is roughly 100 samples/sec.
+  // That makes "count per second" a good approximation of CPU percent.
+  return value / seconds
 }
