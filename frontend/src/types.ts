@@ -1,0 +1,78 @@
+export type MetricKey = 'cpu' | 'heap' | 'allocs' | 'goroutine'
+
+export interface MetricInfo {
+  key: string
+  label: string
+  description: string
+  unit: string
+}
+
+export interface MetricPoint {
+  function: string
+  line: string
+  flat: number
+  cum: number
+}
+
+export interface MetricsSnapshot {
+  type: string
+  url: string
+  timestamp: number
+  total: number
+  items: MetricPoint[]
+}
+
+export interface ProfileMeta {
+  metric: string
+  source: string
+  fileName: string
+  imported: boolean
+  exportable: boolean
+}
+
+export interface EndpointResult {
+  endpoint: string
+  statusCode: number
+  statusText: string
+  body: string
+  error: string
+}
+
+export interface SeriesPoint {
+  date: Date
+  flat?: number
+  cum?: number
+}
+
+export interface SeriesLine {
+  name: string
+  points: SeriesPoint[]
+}
+
+export type LineTable = Record<string, SeriesLine>
+
+export interface GraphData {
+  lineTable: LineTable
+  dates: Date[]
+  stickyKeys: Record<string, number>
+  imported: boolean
+  sourceLabel?: string
+}
+
+export interface GraphPreference {
+  enabled: boolean
+  total: boolean
+  flatOrCum: 'flat' | 'cum'
+  topN: number
+}
+
+export interface Preferences {
+  endpointInput: string
+  sampleInterval: number
+  retainedSamples: number
+  cpuProfileSeconds: number
+  smooth: boolean
+  useMock: boolean
+  timeRangeMinutes: number
+  metrics: Record<MetricKey, GraphPreference>
+}

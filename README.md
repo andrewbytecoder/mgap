@@ -1,36 +1,38 @@
-You don’t want to clutter up your computer with Docker, Prometheus, Grafana or even K8S just to monitor a Go app's heap size, right?
+# live-pprof
 
-Use `live-pprof` to Monitor a Go app's performance. It launches in seconds, boosting your local development.
+`live-pprof` is a desktop pprof monitor built with `Wails + Vue 3 + TypeScript + Vuetify`.
 
-[![go-recipes](https://raw.githubusercontent.com/nikolaydubina/go-recipes/main/badge.svg?raw=true)](https://github.com/nikolaydubina/go-recipes)
+It keeps the original Go-side profile fetching and parsing logic, but the old browser-hosted Next.js frontend has been refactored into a Wails desktop app with a Vue/Vuetify UI.
 
-<img width="1920" alt="Xnip2024-09-10_04-58-57" src="https://github.com/user-attachments/assets/be6fa249-eb7d-4ce9-8db9-8bd8c7c657b1">
+## Stack
 
-https://github.com/user-attachments/assets/77bfacd8-1779-4aaf-9758-9604362a1eb5
+- Go backend for fetching and parsing pprof data
+- Wails desktop shell
+- Vue 3 + TypeScript frontend
+- Vuetify UI components
+- ECharts timeline charts
 
-<details>
-<summary><kbd>Screenshots</kbd></summary>
-<br/>	
-<img width="1920" alt="Heap" src="https://github.com/user-attachments/assets/0bc04e0d-45ed-4b8a-8abf-b550fde31d60">
-<img width="1920" alt="CPU" src="https://github.com/user-attachments/assets/67d6852e-26c6-44ca-a23f-a99e71b6e482">
-<img width="1920" alt="Allocs" src="https://github.com/user-attachments/assets/22e90362-4c0b-4db5-bb43-bf6234b8bf07">
-<img width="1920" alt="Goroutine" src="https://github.com/user-attachments/assets/eb79a142-f0d1-4993-95e7-ce4571ecde19">
-<img width="1920" alt="Detect Endpoints" src="https://github.com/user-attachments/assets/837215f1-e7f9-424e-94b2-4f67ba5af697">
-<img width="1920" alt="Options" src="https://github.com/user-attachments/assets/7d0b33b9-b5cd-48bf-9ccc-0651ae54685f">
-</details>
-
-
-## Install
+## Run In Dev
 
 ```bash
-go install github.com/moderato-app/live-pprof@v1
+wails dev
 ```
+
+This starts the desktop shell and the frontend dev server together.
+
+## Build
+
+```bash
+wails build
+```
+
+The packaged Windows executable is generated at [build/bin/live-pprof.exe](/E:/work/mgap/build/bin/live-pprof.exe).
 
 ## Usage
 
-#### Step 1: setup pprof endpoints
+#### Step 1: expose pprof endpoints in your Go app
 
-```bash
+```go
 package main
 
 import (
@@ -44,24 +46,23 @@ func main() {
 }
 ```
 
-#### Step 2: monitor the pprof endpoints
+#### Step 2: open `live-pprof` and enter one of these
 
-```bash
-live-pprof 6060 
-# Or:
-live-pprof http://localhost:6060/debug/pprof
-# Both commands will monitor http://localhost:6060/debug/pprof
+```text
+6060
+localhost:6060
+http://localhost:6060/debug/pprof
 ```
 
-## Limitations
-* Metrics data is stored in the browser memory and is cleared on page refresh.
-* The page slows down as data grows due to charts rendering.
+The desktop app normalizes the input to the base pprof endpoint and can:
 
-As you can see, live-pprof is mainly for local development. These limitations mean it’s not a replacement for Prometheus and Grafana.
+- Detect the main `/debug/pprof` endpoint plus heap, CPU, allocs and goroutine sub-endpoints
+- Sample heap, CPU, allocs and goroutine profiles on an interval
+- Visualize top functions over time with ECharts
+- Switch between live data and embedded mock data
 
-## Credits
-<a href="https://golangweekly.com/latest" target="_blank">
-  <img width="200" alt="image" src="https://github.com/user-attachments/assets/25490d69-576c-4d47-9f3a-6b8a1200e57b">
-</a>
+## Notes
 
-Thanks to [Golang Weekly](https://golangweekly.com/latest) for the shoutout!
+- Metrics history is kept in window memory and resets when the desktop app reloads.
+- Large retained-sample counts still make charts heavier to render.
+- This is intended for local development and quick inspection, not as a replacement for Prometheus and Grafana.

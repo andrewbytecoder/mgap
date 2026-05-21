@@ -61,7 +61,22 @@ func dispatch(ctx context.Context, req *api.GoMetricsRequest, mt MetricsType) (*
 }
 
 func fetch(ctx context.Context, url string) (*moderato.Metrics, error) {
+	data, err := FetchRawProfile(ctx, url)
+	if err != nil {
+		return nil, err
+	}
 
+	mtr, err := moderato.GetMetricsFromData(data)
+	if err != nil {
+		logging.Sugar.Error(err)
+		logging.Sugar.Error("resp.Body: \n" + string(data))
+		return nil, err
+	}
+
+	return mtr, nil
+}
+
+func FetchRawProfile(ctx context.Context, url string) ([]byte, error) {
 	client := &http.Client{}
 	logging.Sugar.Debugf("GET %s", url)
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
@@ -84,14 +99,7 @@ func fetch(ctx context.Context, url string) (*moderato.Metrics, error) {
 		return nil, errors.New("bad status code: " + resp.Status + ". " + string(data))
 	}
 
-	mtr, err := moderato.GetMetricsFromData(data)
-	if err != nil {
-		logging.Sugar.Error(err)
-		logging.Sugar.Error("resp.Body: \n" + string(data))
-		return nil, err
-	}
-
-	return mtr, nil
+	return data, nil
 }
 
 func toResp(mtr *moderato.Metrics) *api.GoMetricsResponse {
