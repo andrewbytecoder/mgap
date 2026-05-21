@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted } from 'vue'
 import MetricChart from './components/MetricChart.vue'
+import ImportedProfileView from './components/ImportedProfileView.vue'
 import { useLivePprof } from './composables/useLivePprof'
 import { formatBytes, formatNumber, formatPercent, formatTimestamp } from './utils/format'
 import type { MetricKey } from './types'
@@ -297,7 +298,15 @@ function metricSummary(metric: MetricKey): string {
                 </p>
 
                 <div v-if="state.preferences.metrics[metric.key].enabled" class="chart-shell">
+                  <ImportedProfileView
+                    v-if="filteredGraphData[metric.key].imported"
+                    :data="filteredGraphData[metric.key]"
+                    :metric="metric.key"
+                    :mode="state.preferences.metrics[metric.key].flatOrCum"
+                    :top-n="state.preferences.metrics[metric.key].topN"
+                  />
                   <MetricChart
+                    v-else
                     :data="filteredGraphData[metric.key]"
                     :metric="metric"
                     :preference="{
