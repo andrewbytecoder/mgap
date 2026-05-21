@@ -12,7 +12,7 @@ export function defaultPreferences(initialURL: string): Preferences {
     useMock: false,
     timeRangeMinutes: 30,
     metrics: {
-      cpu: { enabled: true, total: false, flatOrCum: 'flat', topN: 10 },
+      cpu: { enabled: true, total: true, flatOrCum: 'flat', topN: 10 },
       heap: { enabled: true, total: false, flatOrCum: 'flat', topN: 10 },
       allocs: { enabled: true, total: false, flatOrCum: 'flat', topN: 10 },
       goroutine: { enabled: true, total: false, flatOrCum: 'flat', topN: 10 }

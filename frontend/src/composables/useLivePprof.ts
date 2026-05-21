@@ -21,6 +21,7 @@ interface State {
 }
 
 let timer: number | undefined
+let recordingSession = 0
 
 export function useLivePprof() {
   const state = reactive<State>({
@@ -111,13 +112,16 @@ export function useLivePprof() {
 
   function stopRecording() {
     state.recording = false
+    recordingSession += 1
     if (timer) {
       window.clearTimeout(timer)
       timer = undefined
     }
   }
 
-  async function sampleMetric(metric: MetricKey) {
+  async function sampleMetric(metric: MetricKey, sessionId: number) {
+    if (state.busyMetrics[metric]) return
+
     const profileSeconds = metric === 'cpu' ? state.preferences.cpuProfileSeconds : 1
     state.busyMetrics[metric] = true
     try {
@@ -127,6 +131,7 @@ export function useLivePprof() {
         profileSeconds,
         state.preferences.useMock
       )
+      if (!state.recording || sessionId !== recordingSession) return
       state.graphData[metric] = appendGraphData(
         state.graphData[metric],
         snapshot,
@@ -137,6 +142,7 @@ export function useLivePprof() {
       )
       state.profileMeta[metric] = await wailsApi.profileMeta(metric)
     } catch (error) {
+      if (!state.recording || sessionId !== recordingSession) return
       state.error = `${metric.toUpperCase()}: ${toMessage(error)}`
     } finally {
       state.busyMetrics[metric] = false
@@ -178,18 +184,21 @@ export function useLivePprof() {
   async function tick() {
     if (!state.recording) return
     state.error = ''
+    const sessionId = recordingSession
 
     const metrics = enabledMetrics.value.map(item => item.key)
-    await Promise.all(metrics.map(metric => sampleMetric(metric)))
+    await Promise.all(metrics.map(metric => sampleMetric(metric, sessionId)))
 
-    if (!state.recording) return
+    if (!state.recording || sessionId !== recordingSession) return
     timer = window.setTimeout(() => {
       void tick()
     }, state.preferences.sampleInterval)
   }
 
   function startRecording() {
+    stopRecording()
     clearData()
+    recordingSession += 1
     state.recording = true
     void tick()
   }

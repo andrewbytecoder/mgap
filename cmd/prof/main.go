@@ -9,5 +9,5 @@ import (
 
 func main() {
 	fmt.Println("pprof server running at http://localhost:6060/debug/pprof")
-	log.Fatal(http.ListenAndServe("localhost:6060", nil))
+	log.Fatal(http.ListenAndServe(":6060", nil))
 }
