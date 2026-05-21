@@ -14,6 +14,18 @@ const dragStartX = ref(0)
 const dragStartY = ref(0)
 const windowStartX = ref(0)
 const windowStartY = ref(0)
+const isMaximised = ref(false)
+
+async function checkMaximised() {
+  isMaximised.value = await WindowIsMaximised()
+}
+
+async function onToggleMaximise() {
+  WindowToggleMaximise()
+  // 等待窗口状态更新后检测
+  await new Promise(r => setTimeout(r, 150))
+  await checkMaximised()
+}
 
 async function onMouseDown(e: MouseEvent) {
   // skip if clicking buttons
@@ -25,9 +37,10 @@ async function onMouseDown(e: MouseEvent) {
   dragStartY.value = e.screenY
 
   // If window is maximised, first restore it before dragging
-  const isMaximised = await WindowIsMaximised()
-  if (isMaximised) {
+  const max = await WindowIsMaximised()
+  if (max) {
     WindowUnmaximise()
+    isMaximised.value = false
     // After unmaximising, the window position changes — use mouse offset to set position
     windowStartX.value = e.screenX - 400 // estimate half width
     windowStartY.value = e.screenY - 20  // near titlebar
@@ -51,6 +64,7 @@ function onMouseUp() {
 }
 
 onMounted(() => {
+  checkMaximised()
   window.addEventListener('mousemove', onMouseMove)
   window.addEventListener('mouseup', onMouseUp)
 })
@@ -72,9 +86,15 @@ onUnmounted(() => {
           <line x1="0" y1="6" x2="12" y2="6" stroke="currentColor" stroke-width="1.5" />
         </svg>
       </button>
-      <button class="titlebar-button" @click="WindowToggleMaximise" title="最大化">
-        <svg width="12" height="12" viewBox="0 0 12 12">
+      <button class="titlebar-button" @click="onToggleMaximise" :title="isMaximised ? '还原' : '最大化'">
+        <!-- 最大化图标 -->
+        <svg v-if="!isMaximised" width="12" height="12" viewBox="0 0 12 12">
           <rect x="1.5" y="1.5" width="9" height="9" fill="none" stroke="currentColor" stroke-width="1.5" />
+        </svg>
+        <!-- 还原图标（重叠方块） -->
+        <svg v-else width="12" height="12" viewBox="0 0 12 12">
+          <rect x="3.5" y="0.5" width="8" height="8" fill="none" stroke="currentColor" stroke-width="1.5" />
+          <rect x="0.5" y="3.5" width="8" height="8" fill="currentColor" opacity="0.15" stroke="currentColor" stroke-width="1.5" />
         </svg>
       </button>
       <button class="titlebar-button titlebar-close" @click="Quit" title="关闭">
