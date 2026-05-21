@@ -30,12 +30,24 @@ type MetricPoint struct {
 	Cum      int64  `json:"cum"`
 }
 
+type StackFrame struct {
+	Func string `json:"func"`
+	File string `json:"file"`
+	Line int    `json:"line"`
+}
+
+type GoroutineStack struct {
+	Count  int64        `json:"count"`
+	Frames []StackFrame `json:"frames"`
+}
+
 type MetricsSnapshot struct {
-	Type      string        `json:"type"`
-	URL       string        `json:"url"`
-	Timestamp int64         `json:"timestamp"`
-	Total     int64         `json:"total"`
-	Items     []MetricPoint `json:"items"`
+	Type      string           `json:"type"`
+	URL       string           `json:"url"`
+	Timestamp int64            `json:"timestamp"`
+	Total     int64            `json:"total"`
+	Items     []MetricPoint    `json:"items"`
+	Stacks    []GoroutineStack `json:"stacks,omitempty"`
 }
 
 type EndpointResult struct {
@@ -61,7 +73,7 @@ func NewService() *Service {
 }
 
 func (s *Service) InitialURL() string {
-	return ""
+	return "http://localhost:6060/debug/pprof"
 }
 
 func (s *Service) AvailableMetrics() []MetricInfo {
@@ -167,10 +179,12 @@ func (s *Service) FetchMetrics(parent context.Context, input string, metric stri
 	timeoutCtx, cancel := context.WithTimeout(ctx, time.Duration(timeoutSeconds)*time.Second)
 	defer cancel()
 
+	var rawData []byte
 	profileURL, err := metrics.MetricsURL(false, metricType, baseURL, profileSeconds)
 	if err == nil && !useMock {
 		capturedAt := time.Now().UnixNano()
 		if data, fetchErr := metrics.FetchRawProfile(timeoutCtx, profileURL); fetchErr == nil {
+			rawData = data
 			s.profiles.set(metric, profileBlob{
 				Metric:    metric,
 				Data:      data,
@@ -215,12 +229,20 @@ func (s *Service) FetchMetrics(parent context.Context, input string, metric stri
 		timestamp = time.Now().UnixNano()
 	}
 
+	var stacks []GoroutineStack
+	if metricType == metrics.MetricsTypeGoroutine && rawData != nil {
+		if parsed, err := parseGoroutineStacks(rawData); err == nil {
+			stacks = parsed
+		}
+	}
+
 	return &MetricsSnapshot{
 		Type:      metric,
 		URL:       baseURL,
 		Timestamp: timestamp,
 		Total:     resp.Total,
 		Items:     items,
+		Stacks:    stacks,
 	}, nil
 }
 

@@ -35,7 +35,8 @@ export function importedGraphData(snapshot: MetricsSnapshot, metric: MetricKey, 
     dates: [date],
     stickyKeys: {},
     imported: true,
-    sourceLabel: snapshot.url
+    sourceLabel: snapshot.url,
+    stacks: snapshot.stacks
   }
 }
 
@@ -92,6 +93,7 @@ export function appendGraphData(
     stickyKeys: { ...graphData.stickyKeys },
     imported: false,
     sourceLabel: snapshot.url,
+    stacks: snapshot.stacks,
     lineTable: Object.fromEntries(
       Object.entries(graphData.lineTable).map(([key, line]) => [
         key,

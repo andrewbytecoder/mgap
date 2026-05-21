@@ -159,6 +159,25 @@ function shorten(value: string): string {
       </div>
     </div>
   </div>
+
+  <!-- Goroutine Stacks -->
+  <div v-if="metric === 'goroutine' && props.data.stacks?.length" class="stacks-section">
+    <div class="stacks-header">
+      <span>Goroutine Stacks</span>
+      <span class="stacks-count">{{ props.data.stacks.length }} unique stack(s)</span>
+    </div>
+    <div class="stacks-list">
+      <div v-for="(stack, idx) in props.data.stacks" :key="idx" class="stack-card">
+        <div class="stack-count">{{ stack.count }} goroutine(s)</div>
+        <div class="stack-frames">
+          <div v-for="(frame, fidx) in stack.frames" :key="fidx" class="stack-frame">
+            <span class="frame-func mono">{{ frame.func }}</span>
+            <span v-if="frame.file" class="frame-location mono">{{ frame.file }}:{{ frame.line }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
 </template>
 
 <style scoped>
@@ -208,6 +227,108 @@ function shorten(value: string): string {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.stacks-section {
+  margin-top: 16px;
+  border: 1px solid rgba(48, 74, 61, 0.08);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.55);
+  overflow: hidden;
+}
+
+.stacks-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  background: #eef0e7;
+  font-size: 13px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #304a3d;
+}
+
+.stacks-count {
+  font-size: 12px;
+  font-weight: 400;
+  color: #56665d;
+  text-transform: none;
+  letter-spacing: normal;
+}
+
+.stacks-list {
+  max-height: 400px;
+  overflow-y: auto;
+  padding: 12px 16px;
+}
+
+.stack-card {
+  margin-bottom: 12px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: rgba(48, 74, 61, 0.04);
+  border: 1px solid rgba(48, 74, 61, 0.06);
+}
+
+.stack-card:last-child {
+  margin-bottom: 0;
+}
+
+.stack-count {
+  font-size: 13px;
+  font-weight: 600;
+  color: #d86e3f;
+  margin-bottom: 8px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid rgba(48, 74, 61, 0.08);
+}
+
+.stack-frames {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.stack-frame {
+  display: flex;
+  flex-direction: column;
+  font-size: 12px;
+  line-height: 1.5;
+  padding-left: 12px;
+  position: relative;
+}
+
+.stack-frame::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 6px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: rgba(48, 74, 61, 0.25);
+}
+
+.stack-frame:not(:last-child)::after {
+  content: '';
+  position: absolute;
+  left: 2.5px;
+  top: 14px;
+  width: 1px;
+  height: calc(100% + 2px);
+  background: rgba(48, 74, 61, 0.12);
+}
+
+.frame-func {
+  color: #142018;
+  word-break: break-all;
+}
+
+.frame-location {
+  color: #56665d;
+  font-size: 11px;
 }
 
 @media (max-width: 1200px) {

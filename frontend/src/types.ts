@@ -14,12 +14,24 @@ export interface MetricPoint {
   cum: number
 }
 
+export interface StackFrame {
+  func: string
+  file: string
+  line: number
+}
+
+export interface GoroutineStack {
+  count: number
+  frames: StackFrame[]
+}
+
 export interface MetricsSnapshot {
   type: string
   url: string
   timestamp: number
   total: number
   items: MetricPoint[]
+  stacks?: GoroutineStack[]
 }
 
 export interface ProfileMeta {
@@ -57,6 +69,7 @@ export interface GraphData {
   stickyKeys: Record<string, number>
   imported: boolean
   sourceLabel?: string
+  stacks?: GoroutineStack[]
 }
 
 export interface GraphPreference {

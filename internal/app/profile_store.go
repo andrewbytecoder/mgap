@@ -6,11 +6,13 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 	"sync"
 	"time"
 
 	"github.com/moderato-app/pprof/moderato"
+	pprofProfile "github.com/moderato-app/pprof/profile"
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 )
 
@@ -158,11 +160,18 @@ func profileSnapshotFromData(metric string, source string, data []byte, timestam
 		return nil, err
 	}
 
-	resp := metricsToSnapshot(metric, source, mtr, timestamp)
+	var stacks []GoroutineStack
+	if metric == "goroutine" {
+		if parsed, err := parseGoroutineStacks(data); err == nil {
+			stacks = parsed
+		}
+	}
+
+	resp := metricsToSnapshot(metric, source, mtr, timestamp, stacks)
 	return resp, nil
 }
 
-func metricsToSnapshot(metric string, source string, mtr *moderato.Metrics, timestamp int64) *MetricsSnapshot {
+func metricsToSnapshot(metric string, source string, mtr *moderato.Metrics, timestamp int64, stacks []GoroutineStack) *MetricsSnapshot {
 	if timestamp == 0 {
 		timestamp = time.Now().UnixNano()
 	}
@@ -189,7 +198,68 @@ func metricsToSnapshot(metric string, source string, mtr *moderato.Metrics, time
 		Timestamp: timestamp,
 		Total:     mtr.Total,
 		Items:     items,
+		Stacks:    stacks,
 	}
+}
+
+func parseGoroutineStacks(data []byte) ([]GoroutineStack, error) {
+	prof, err := pprofProfile.ParseData(data)
+	if err != nil {
+		return nil, err
+	}
+
+	stackMap := make(map[string]*GoroutineStack)
+	for _, sample := range prof.Sample {
+		var frames []StackFrame
+		var keyParts []string
+		// Locations are in innermost-first order; reverse for display (outermost first)
+		for i := len(sample.Location) - 1; i >= 0; i-- {
+			loc := sample.Location[i]
+			for _, line := range loc.Line {
+				frame := StackFrame{
+					Func: line.Function.Name,
+					File: line.Function.Filename,
+					Line: int(line.Line),
+				}
+				frames = append(frames, frame)
+				keyParts = append(keyParts, fmt.Sprintf("%s@%s:%d", frame.Func, frame.File, frame.Line))
+			}
+		}
+
+		count := int64(1)
+		if len(sample.Value) > 0 {
+			count = sample.Value[0]
+		}
+
+		key := strings.Join(keyParts, "|")
+		if existing, ok := stackMap[key]; ok {
+			existing.Count += count
+		} else {
+			framesCopy := make([]StackFrame, len(frames))
+			copy(framesCopy, frames)
+			stackMap[key] = &GoroutineStack{
+				Count:  count,
+				Frames: framesCopy,
+			}
+		}
+	}
+
+	var stacks []GoroutineStack
+	for _, stack := range stackMap {
+		stacks = append(stacks, *stack)
+	}
+
+	slices.SortFunc(stacks, func(a, b GoroutineStack) int {
+		if a.Count > b.Count {
+			return -1
+		}
+		if a.Count < b.Count {
+			return 1
+		}
+		return 0
+	})
+
+	return stacks, nil
 }
 
 func readAllProfile(reader io.Reader) ([]byte, error) {
