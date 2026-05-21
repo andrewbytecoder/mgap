@@ -97,7 +97,9 @@ onUnmounted(() => {
   color: #f7f6f0;
   user-select: none;
   -webkit-user-select: none;
-  position: relative;
+  position: sticky;
+  top: 0;
+  flex-shrink: 0;
   z-index: 9999;
 }
 
