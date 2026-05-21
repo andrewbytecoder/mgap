@@ -39,6 +39,19 @@ export function importedGraphData(snapshot: MetricsSnapshot, metric: MetricKey, 
   }
 }
 
+export function importedTimelineGraphData(
+  snapshots: MetricsSnapshot[],
+  metric: MetricKey,
+  topN: number,
+  retainedSamples: number,
+  cpuProfileSeconds: number
+): GraphData {
+  return snapshots.reduce(
+    (graphData, snapshot) => appendGraphData(graphData, snapshot, metric, topN, retainedSamples, cpuProfileSeconds),
+    newGraphData()
+  )
+}
+
 export function filterGraphDataByMinutes(graphData: GraphData, minutes: number): GraphData {
   if (graphData.dates.length === 0 || graphData.imported || minutes <= 0) return graphData
 

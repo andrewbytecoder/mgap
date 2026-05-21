@@ -7,6 +7,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -261,6 +262,83 @@ func (s *Service) ImportProfile(parent context.Context, metric string) (*Metrics
 	})
 
 	return snapshot, nil
+}
+
+func (s *Service) ImportProfiles(parent context.Context, metric string) ([]*MetricsSnapshot, error) {
+	if _, err := parseMetric(metric); err != nil {
+		return nil, err
+	}
+
+	ctx := parent
+	if ctx == nil {
+		ctx = context.Background()
+	}
+
+	paths, err := openMultipleProfileDialog(ctx, metric)
+	if err != nil {
+		return nil, err
+	}
+	if len(paths) == 0 {
+		return nil, nil
+	}
+
+	type imported struct {
+		snapshot  *MetricsSnapshot
+		fileName  string
+		timestamp int64
+	}
+
+	results := make([]imported, 0, len(paths))
+	var newest profileBlob
+
+	for _, path := range paths {
+		data, fileName, fileTimestamp, readErr := readProfileFile(path)
+		if readErr != nil {
+			return nil, readErr
+		}
+
+		snapshot, snapErr := profileSnapshotFromData(metric, path, data, fileTimestamp)
+		if snapErr != nil {
+			return nil, snapErr
+		}
+
+		results = append(results, imported{
+			snapshot:  snapshot,
+			fileName:  fileName,
+			timestamp: fileTimestamp,
+		})
+
+		if fileTimestamp >= newest.Timestamp {
+			newest = profileBlob{
+				Metric:    metric,
+				Data:      data,
+				Source:    path,
+				FileName:  fileName,
+				Imported:  true,
+				Timestamp: fileTimestamp,
+			}
+		}
+	}
+
+	slices.SortFunc(results, func(left imported, right imported) int {
+		if left.timestamp < right.timestamp {
+			return -1
+		}
+		if left.timestamp > right.timestamp {
+			return 1
+		}
+		return strings.Compare(left.fileName, right.fileName)
+	})
+
+	if newest.Timestamp > 0 {
+		s.profiles.set(metric, newest)
+	}
+
+	snapshots := make([]*MetricsSnapshot, 0, len(results))
+	for _, item := range results {
+		snapshots = append(snapshots, item.snapshot)
+	}
+	return snapshots, nil
 }
 
 func (s *Service) ExportProfile(parent context.Context, metric string) (string, error) {

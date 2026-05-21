@@ -5,6 +5,7 @@ import {
   ExportProfile,
   FetchMetrics,
   ImportProfile,
+  ImportProfiles,
   InitialURL,
   NormalizeURL,
   ProfileMeta
@@ -19,6 +20,9 @@ export const wailsApi = {
   },
   importProfile(metric: string) {
     return ImportProfile(metric)
+  },
+  importProfiles(metric: string) {
+    return ImportProfiles(metric)
   },
   exportProfile(metric: string) {
     return ExportProfile(metric)

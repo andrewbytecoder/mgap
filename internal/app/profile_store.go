@@ -95,6 +95,22 @@ func openProfileDialog(ctx context.Context, metric string) (string, error) {
 	return path, nil
 }
 
+func openMultipleProfileDialog(ctx context.Context, metric string) ([]string, error) {
+	paths, err := runtime.OpenMultipleFilesDialog(ctx, runtime.OpenDialogOptions{
+		Title: "Import " + strings.ToUpper(metric) + " pprof files",
+		Filters: []runtime.FileFilter{
+			{
+				DisplayName: "pprof profiles",
+				Pattern:     "*.pb.gz;*.pb;*.pprof;*.prof;*.profile;*",
+			},
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+	return paths, nil
+}
+
 func saveProfileDialog(ctx context.Context, metric string, fileName string) (string, error) {
 	defaultName := fileName
 	if strings.TrimSpace(defaultName) == "" {

@@ -1,6 +1,6 @@
 import { computed, onBeforeUnmount, reactive, watch } from 'vue'
 import { wailsApi } from '../wails'
-import { appendGraphData, filterGraphDataByMinutes, importedGraphData, newGraphData } from '../utils/graph'
+import { appendGraphData, filterGraphDataByMinutes, importedGraphData, importedTimelineGraphData, newGraphData } from '../utils/graph'
 import { loadPreferences, savePreferences } from '../services/preferences'
 import type { EndpointResult, GraphData, MetricInfo, MetricKey, Preferences, ProfileMeta } from '../types'
 
@@ -146,9 +146,18 @@ export function useLivePprof() {
   async function importProfile(metric: MetricKey) {
     state.error = ''
     try {
-      const snapshot = await wailsApi.importProfile(metric)
-      if (!snapshot) return
-      state.graphData[metric] = importedGraphData(snapshot, metric, state.preferences.cpuProfileSeconds)
+      const snapshots = await wailsApi.importProfiles(metric)
+      if (!snapshots || snapshots.length === 0) return
+      state.graphData[metric] =
+        snapshots.length === 1
+          ? importedGraphData(snapshots[0], metric, state.preferences.cpuProfileSeconds)
+          : importedTimelineGraphData(
+              snapshots,
+              metric,
+              state.preferences.metrics[metric].topN,
+              state.preferences.retainedSamples,
+              state.preferences.cpuProfileSeconds
+            )
       state.profileMeta[metric] = await wailsApi.profileMeta(metric)
       state.preferences.metrics[metric].enabled = true
     } catch (error) {

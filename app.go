@@ -35,6 +35,10 @@ func (a *App) ImportProfile(metric string) (*app.MetricsSnapshot, error) {
 	return a.service.ImportProfile(a.ctx, metric)
 }
 
+func (a *App) ImportProfiles(metric string) ([]*app.MetricsSnapshot, error) {
+	return a.service.ImportProfiles(a.ctx, metric)
+}
+
 func (a *App) ExportProfile(metric string) (string, error) {
 	return a.service.ExportProfile(a.ctx, metric)
 }
