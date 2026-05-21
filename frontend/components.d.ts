@@ -10,5 +10,6 @@ declare module 'vue' {
   export interface GlobalComponents {
     ImportedProfileView: typeof import('./src/components/ImportedProfileView.vue')['default']
     MetricChart: typeof import('./src/components/MetricChart.vue')['default']
+    TitleBar: typeof import('./src/components/TitleBar.vue')['default']
   }
 }

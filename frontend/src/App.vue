@@ -2,6 +2,7 @@
 import { computed, onMounted } from 'vue'
 import MetricChart from './components/MetricChart.vue'
 import ImportedProfileView from './components/ImportedProfileView.vue'
+import TitleBar from './components/TitleBar.vue'
 import { useLivePprof } from './composables/useLivePprof'
 import { formatBytes, formatNumber, formatPercent, formatTimestamp } from './utils/format'
 import type { MetricKey } from './types'
@@ -49,9 +50,11 @@ function metricSummary(metric: MetricKey): string {
   <v-app>
     <v-main>
       <div class="shell">
+        <TitleBar />
+
         <section class="hero">
           <div class="hero-copy">
-            <p class="eyebrow">Wails Desktop Monitor</p>
+            <p class="eyebrow">monitor go app pprof</p>
             <h1>live-pprof</h1>
             <p class="hero-text">
               Track heap, allocs, CPU and goroutine profiles from a desktop app instead of juggling a browser tab and a
@@ -330,7 +333,12 @@ function metricSummary(metric: MetricKey): string {
 
 <style scoped>
 .shell {
-  padding: 28px;
+  padding: 0;
+  height: 100vh;
+  overflow-y: auto;
+  background: #f5f6f0;
+  display: flex;
+  flex-direction: column;
 }
 
 .hero {
@@ -340,9 +348,11 @@ function metricSummary(metric: MetricKey): string {
   justify-content: space-between;
   gap: 24px;
   padding: 28px 32px;
-  border-radius: 28px;
+  border-radius: 0;
+  margin: 0;
   background: linear-gradient(135deg, #1c2b21 0%, #304a3d 48%, #486d5a 100%);
   color: #f7f6f0;
+  flex-shrink: 0;
 }
 
 .hero-copy {
@@ -552,7 +562,7 @@ h1 {
 
 @media (max-width: 960px) {
   .shell {
-    padding: 16px;
+    padding: 0;
   }
 
   .hero {

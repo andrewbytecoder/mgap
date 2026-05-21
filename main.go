@@ -15,11 +15,14 @@ func main() {
 	app := NewApp()
 
 	err := wails.Run(&options.App{
-		Title:     "live-pprof",
-		Width:     1480,
-		Height:    960,
-		MinWidth:  1120,
-		MinHeight: 760,
+		Title:         "live-pprof",
+		Width:         1480,
+		Height:        960,
+		MinWidth:      1120,
+		MinHeight:     760,
+		Frameless:     true,
+		DisableResize: false,
+		StartHidden:   false,
 		AssetServer: &assetserver.Options{
 			Assets: assets,
 		},
