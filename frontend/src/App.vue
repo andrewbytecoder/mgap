@@ -85,8 +85,7 @@ function metricSummary(metric: MetricKey): string {
               <v-text-field
                 v-model="state.preferences.endpointInput"
                 label="pprof URL or port"
-                hint="Examples: 6060, localhost:6060, http://localhost:6060/debug/pprof"
-                placeholder="Enter endpoint manually"
+                placeholder="http://localhost:6060/debug/pprof"
                 persistent-hint
                 prepend-inner-icon="mdi-lan-connect"
               />
