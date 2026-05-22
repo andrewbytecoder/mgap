@@ -15,7 +15,10 @@ export function defaultPreferences(initialURL: string): Preferences {
       cpu: { enabled: true, total: true, flatOrCum: 'flat', topN: 10 },
       heap: { enabled: true, total: false, flatOrCum: 'flat', topN: 10 },
       allocs: { enabled: true, total: false, flatOrCum: 'flat', topN: 10 },
-      goroutine: { enabled: true, total: false, flatOrCum: 'flat', topN: 10 }
+      goroutine: { enabled: true, total: false, flatOrCum: 'flat', topN: 10 },
+      block: { enabled: false, total: false, flatOrCum: 'flat', topN: 10 },
+      mutex: { enabled: false, total: false, flatOrCum: 'flat', topN: 10 },
+      threadcreate: { enabled: false, total: false, flatOrCum: 'flat', topN: 10 }
     }
   }
 }

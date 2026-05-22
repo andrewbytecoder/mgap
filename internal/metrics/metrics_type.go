@@ -13,6 +13,9 @@ const (
 	MetricsTypeCPU       = "profile"
 	MetricsTypeAllocs    = "allocs"
 	MetricsTypeGoroutine = "goroutine"
+	MetricsTypeBlock     = "block"
+	MetricsTypeMutex     = "mutex"
+	MetricsTypeThread    = "threadcreate"
 )
 
 // MetricsURL generates a URL that works with Go's net/http/pprof.

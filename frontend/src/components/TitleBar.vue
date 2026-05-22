@@ -54,6 +54,7 @@ async function onMouseDown(e: MouseEvent) {
 
 function onMouseMove(e: MouseEvent) {
   if (!isDragging.value) return
+  //  计算出移动的坐标
   const deltaX = e.screenX - dragStartX.value
   const deltaY = e.screenY - dragStartY.value
   WindowSetPosition(windowStartX.value + deltaX, windowStartY.value + deltaY)

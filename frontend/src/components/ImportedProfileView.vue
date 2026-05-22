@@ -134,7 +134,8 @@ function resize() {
 
 function formatMetricValue(metric: MetricKey, value: number): string {
   if (metric === 'cpu') return formatPercent(value)
-  if (metric === 'goroutine') return formatNumber(value)
+  if (metric === 'goroutine' || metric === 'threadcreate') return formatNumber(value)
+  if (metric === 'block' || metric === 'mutex') return formatNumber(value)
   return formatBytes(value)
 }
 
@@ -165,21 +166,6 @@ function shorten(value: string): string {
     <div class="stacks-header">
       <span>Goroutine Stacks</span>
       <span class="stacks-count">{{ props.data.stacks?.length || 0 }} unique stack(s)</span>
-    </div>
-
-    <!-- Diagnostic info -->
-    <div class="stacks-list">
-      <div class="stack-card" style="background:rgba(216,110,63,0.08);border-color:rgba(216,110,63,0.2)">
-        <div class="stack-count" style="color:#b55a2e">Diagnostic</div>
-        <div class="stack-frames">
-          <div class="stack-frame">
-            <span class="frame-func mono">stacks={{ JSON.stringify(props.data.stacks?.length ?? 'undefined') }}</span>
-          </div>
-          <div class="stack-frame">
-            <span class="frame-func mono">rawText={{ JSON.stringify(props.data.rawText ? 'present(' + props.data.rawText.length + ' chars)' : 'missing') }}</span>
-          </div>
-        </div>
-      </div>
     </div>
 
     <div v-if="props.data.stacks?.length" class="stacks-list">

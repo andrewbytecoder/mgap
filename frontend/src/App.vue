@@ -2,6 +2,7 @@
 import { computed, onMounted } from 'vue'
 import MetricChart from './components/MetricChart.vue'
 import ImportedProfileView from './components/ImportedProfileView.vue'
+import ProfilesPanel from './components/ProfilesPanel.vue'
 import TitleBar from './components/TitleBar.vue'
 import { useLivePprof } from './composables/useLivePprof'
 import { formatBytes, formatNumber, formatPercent, formatTimestamp } from './utils/format'
@@ -14,11 +15,15 @@ const {
   filteredGraphData,
   bootstrap,
   detectEndpoints,
+  refreshProfileCatalog,
   startRecording,
   stopRecording,
   clearData,
   importProfile,
-  exportProfile
+  exportProfile,
+  openProfileText,
+  downloadProfile,
+  openProfileFlamegraph
 } = useLivePprof()
 
 const statusText = computed(() => (state.recording ? 'Sampling live profiles' : 'Idle'))
@@ -105,6 +110,16 @@ function metricSummary(metric: MetricKey): string {
                   Clear
                 </v-btn>
                 <v-btn
+                  color="accent"
+                  variant="tonal"
+                  prepend-icon="mdi-view-dashboard-outline"
+                  :disabled="hasEndpointError"
+                  :loading="state.loadingProfiles"
+                  @click="refreshProfileCatalog"
+                >
+                  Profiles
+                </v-btn>
+                <v-btn
                   :color="state.recording ? 'error' : 'success'"
                   variant="flat"
                   :disabled="hasEndpointError"
@@ -186,6 +201,21 @@ function metricSummary(metric: MetricKey): string {
             </v-card>
           </v-col>
         </v-row>
+
+        <section class="profiles-section">
+          <ProfilesPanel
+            :entries="state.profileCatalog"
+            :endpoint="state.preferences.endpointInput"
+            :loading="state.loadingProfiles"
+            :raw-text="state.profileRawText"
+            :flamegraph="state.profileFlamegraph"
+            @refresh="refreshProfileCatalog"
+            @import-profile="name => importProfile(name as MetricKey)"
+            @download-profile="(name, debug) => downloadProfile(name, debug)"
+            @open-text="(name, debug) => openProfileText(name, debug)"
+            @open-flame="name => openProfileFlamegraph(name)"
+          />
+        </section>
 
         <section class="metrics-section">
           <div class="card-title chart-title">
@@ -483,6 +513,10 @@ h1 {
 }
 
 .metrics-section {
+  margin-top: 22px;
+}
+
+.profiles-section {
   margin-top: 22px;
 }
 

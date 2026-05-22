@@ -110,6 +110,24 @@ func (s *Service) AvailableMetrics() []MetricInfo {
 			Description: "goroutine: /debug/pprof/goroutine",
 			Unit:        "count",
 		},
+		{
+			Key:         "block",
+			Label:       "Block",
+			Description: "block: stack traces that led to blocking on synchronization primitives",
+			Unit:        "time",
+		},
+		{
+			Key:         "mutex",
+			Label:       "Mutex",
+			Description: "mutex: stack traces of holders of contended mutexes",
+			Unit:        "time",
+		},
+		{
+			Key:         "threadcreate",
+			Label:       "Threadcreate",
+			Description: "threadcreate: stack traces that led to the creation of new OS threads",
+			Unit:        "count",
+		},
 	}
 }
 
@@ -137,6 +155,9 @@ func (s *Service) DetectURL(parent context.Context, input string) ([]EndpointRes
 		metrics.MetricsTypeCPU,
 		metrics.MetricsTypeAllocs,
 		metrics.MetricsTypeGoroutine,
+		metrics.MetricsTypeBlock,
+		metrics.MetricsTypeMutex,
+		metrics.MetricsTypeThread,
 	} {
 		u, metricErr := metrics.MetricsURL(true, mt, baseURL, 1)
 		if metricErr != nil {
@@ -467,6 +488,8 @@ func (s *Service) fetchLive(ctx context.Context, req *api.GoMetricsRequest, metr
 		return s.metrics.AllocsMetrics(ctx, req)
 	case metrics.MetricsTypeGoroutine:
 		return s.metrics.GoroutineMetrics(ctx, req)
+	case metrics.MetricsTypeBlock, metrics.MetricsTypeMutex, metrics.MetricsTypeThread:
+		return s.metrics.GenericMetrics(ctx, req, metricType)
 	default:
 		return nil, fmt.Errorf("unsupported metric type: %s", metricType)
 	}
@@ -482,6 +505,8 @@ func (s *Service) fetchMock(ctx context.Context, req *api.GoMetricsRequest, metr
 		return s.mockMetrics.AllocsMetrics(ctx, req)
 	case metrics.MetricsTypeGoroutine:
 		return s.mockMetrics.GoroutineMetrics(ctx, req)
+	case metrics.MetricsTypeBlock, metrics.MetricsTypeMutex, metrics.MetricsTypeThread:
+		return s.mockMetrics.GenericMetrics(req, metricType)
 	default:
 		return nil, fmt.Errorf("unsupported metric type: %s", metricType)
 	}
@@ -497,6 +522,12 @@ func parseMetric(metric string) (metrics.MetricsType, error) {
 		return metrics.MetricsTypeAllocs, nil
 	case "goroutine":
 		return metrics.MetricsTypeGoroutine, nil
+	case "block":
+		return metrics.MetricsTypeBlock, nil
+	case "mutex":
+		return metrics.MetricsTypeMutex, nil
+	case "threadcreate":
+		return metrics.MetricsTypeThread, nil
 	default:
 		return "", fmt.Errorf("unsupported metric: %s", metric)
 	}

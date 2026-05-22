@@ -128,12 +128,13 @@ function resize() {
 
 function formatMetricValue(metric: MetricKey, value: number): string {
   if (metric === 'cpu') return formatPercent(value)
-  if (metric === 'goroutine') return formatNumber(value)
+  if (metric === 'goroutine' || metric === 'threadcreate') return formatNumber(value)
+  if (metric === 'block' || metric === 'mutex') return formatNumber(value)
   return formatBytes(value)
 }
 
 function estimateAxisPadding(metric: MetricKey, values: number[]): number {
-  const baseline = metric === 'goroutine' ? 64 : 72
+  const baseline = metric === 'goroutine' || metric === 'threadcreate' ? 64 : 72
   if (values.length === 0) return baseline
 
   const labelLength = values

@@ -1,4 +1,4 @@
-export type MetricKey = 'cpu' | 'heap' | 'allocs' | 'goroutine'
+export type MetricKey = 'cpu' | 'heap' | 'allocs' | 'goroutine' | 'block' | 'mutex' | 'threadcreate'
 
 export interface MetricInfo {
   key: string
@@ -47,6 +47,25 @@ export interface ProfileMeta {
   fileName: string
   imported: boolean
   exportable: boolean
+}
+
+export interface ProfileCatalogEntry {
+  name: string
+  count: number
+  description: string
+  supportsChart: boolean
+  supportsRawText: boolean
+  supportsImport: boolean
+  supportsExport: boolean
+  supportsFlame: boolean
+}
+
+export interface FlamegraphNode {
+  name: string
+  fullName: string
+  fileName: string
+  value: number
+  children: FlamegraphNode[]
 }
 
 export interface EndpointResult {

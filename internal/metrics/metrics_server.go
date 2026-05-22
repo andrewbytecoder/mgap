@@ -43,6 +43,11 @@ func (m *MetricsServer) GoroutineMetrics(ctx context.Context, req *api.GoMetrics
 	return dispatch(ctx, req, MetricsTypeGoroutine)
 }
 
+func (m *MetricsServer) GenericMetrics(ctx context.Context, req *api.GoMetricsRequest, mt MetricsType) (*api.GoMetricsResponse, error) {
+	logging.Sugar.Debugw("GenericMetrics req", "metric", mt, "req", req)
+	return dispatch(ctx, req, mt)
+}
+
 func dispatch(ctx context.Context, req *api.GoMetricsRequest, mt MetricsType) (*api.GoMetricsResponse, error) {
 	u, err := MetricsURL(false, mt, req.Url, req.ProfileSeconds)
 	if err != nil {

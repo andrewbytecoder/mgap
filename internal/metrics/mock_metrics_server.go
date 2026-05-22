@@ -4,6 +4,7 @@ package metrics
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/moderato-app/live-pprof/api"
 	"github.com/moderato-app/live-pprof/internal/logging"
@@ -40,6 +41,15 @@ func (m *MockMetricsServer) AllocsMetrics(_ context.Context, req *api.GoMetricsR
 func (m *MockMetricsServer) GoroutineMetrics(_ context.Context, req *api.GoMetricsRequest) (*api.GoMetricsResponse, error) {
 	logging.Sugar.Debug("GoroutineMetrics req:", req)
 	return m.dispatch(req, MetricsTypeGoroutine)
+}
+
+func (m *MockMetricsServer) GenericMetrics(req *api.GoMetricsRequest, mt MetricsType) (*api.GoMetricsResponse, error) {
+	switch mt {
+	case MetricsTypeHeap, MetricsTypeCPU, MetricsTypeAllocs, MetricsTypeGoroutine:
+		return m.dispatch(req, mt)
+	default:
+		return nil, fmt.Errorf("mock data is not available for metric %s", mt)
+	}
 }
 
 func (m *MockMetricsServer) dispatch(req *api.GoMetricsRequest, mt MetricsType) (*api.GoMetricsResponse, error) {

@@ -2,8 +2,12 @@ import {
   AppInfo,
   AvailableMetrics,
   DetectURL,
+  DownloadProfile,
   ExportProfile,
+  FetchProfileCatalog,
+  FetchProfileText,
   FetchMetrics,
+  GetProfileFlamegraph,
   ImportProfile,
   ImportProfiles,
   InitialURL,
@@ -14,6 +18,12 @@ import {
 export const wailsApi = {
   detectURL(input: string) {
     return DetectURL(input)
+  },
+  fetchProfileCatalog(input: string) {
+    return FetchProfileCatalog(input)
+  },
+  fetchProfileText(input: string, profile: string, debug: number, seconds: number) {
+    return FetchProfileText(input, profile, debug, seconds)
   },
   fetchMetrics(input: string, metric: string, profileSeconds: number, useMock: boolean) {
     return FetchMetrics(input, metric, profileSeconds, useMock)
@@ -26,6 +36,12 @@ export const wailsApi = {
   },
   exportProfile(metric: string) {
     return ExportProfile(metric)
+  },
+  downloadProfile(input: string, profile: string, debug: number, seconds: number) {
+    return DownloadProfile(input, profile, debug, seconds)
+  },
+  getProfileFlamegraph(input: string, profile: string, seconds: number) {
+    return GetProfileFlamegraph(input, profile, seconds)
   },
   profileMeta(metric: string) {
     return ProfileMeta(metric)

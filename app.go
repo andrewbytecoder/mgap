@@ -47,6 +47,22 @@ func (a *App) ProfileMeta(metric string) (app.ProfileMeta, error) {
 	return a.service.ProfileMeta(metric)
 }
 
+func (a *App) FetchProfileCatalog(input string) ([]app.ProfileCatalogEntry, error) {
+	return a.service.FetchProfileCatalog(a.ctx, input)
+}
+
+func (a *App) FetchProfileText(input string, profile string, debug int, seconds uint64) (string, error) {
+	return a.service.FetchProfileText(a.ctx, input, profile, debug, seconds)
+}
+
+func (a *App) DownloadProfile(input string, profile string, debug int, seconds uint64) (string, error) {
+	return a.service.DownloadProfile(a.ctx, input, profile, debug, seconds)
+}
+
+func (a *App) GetProfileFlamegraph(input string, profile string, seconds uint64) (*app.FlamegraphNode, error) {
+	return a.service.GetProfileFlamegraph(a.ctx, input, profile, seconds)
+}
+
 func (a *App) NormalizeURL(input string) (string, error) {
 	return a.service.NormalizeURL(input)
 }

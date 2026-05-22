@@ -2,9 +2,9 @@ import { computed, onBeforeUnmount, reactive, watch } from 'vue'
 import { wailsApi } from '../wails'
 import { appendGraphData, filterGraphDataByMinutes, importedGraphData, importedTimelineGraphData, newGraphData } from '../utils/graph'
 import { loadPreferences, savePreferences } from '../services/preferences'
-import type { EndpointResult, GraphData, MetricInfo, MetricKey, Preferences, ProfileMeta } from '../types'
+import type { EndpointResult, FlamegraphNode, GraphData, MetricInfo, MetricKey, Preferences, ProfileCatalogEntry, ProfileMeta } from '../types'
 
-const metricKeys: MetricKey[] = ['cpu', 'heap', 'allocs', 'goroutine']
+const metricKeys: MetricKey[] = ['cpu', 'heap', 'allocs', 'goroutine', 'block', 'mutex', 'threadcreate']
 
 interface State {
   ready: boolean
@@ -13,6 +13,10 @@ interface State {
   busyMetrics: Record<MetricKey, boolean>
   error: string
   detectResults: EndpointResult[]
+  profileCatalog: ProfileCatalogEntry[]
+  loadingProfiles: boolean
+  profileRawText: string
+  profileFlamegraph: FlamegraphNode | null
   graphData: Record<MetricKey, GraphData>
   profileMeta: Record<MetricKey, ProfileMeta>
   preferences: Preferences
@@ -32,21 +36,34 @@ export function useLivePprof() {
       cpu: false,
       heap: false,
       allocs: false,
-      goroutine: false
+      goroutine: false,
+      block: false,
+      mutex: false,
+      threadcreate: false
     },
     error: '',
     detectResults: [],
+    profileCatalog: [],
+    loadingProfiles: false,
+    profileRawText: '',
+    profileFlamegraph: null,
     graphData: {
       cpu: newGraphData(),
       heap: newGraphData(),
       allocs: newGraphData(),
-      goroutine: newGraphData()
+      goroutine: newGraphData(),
+      block: newGraphData(),
+      mutex: newGraphData(),
+      threadcreate: newGraphData()
     },
     profileMeta: {
       cpu: { metric: 'cpu', source: '', fileName: '', imported: false, exportable: false },
       heap: { metric: 'heap', source: '', fileName: '', imported: false, exportable: false },
       allocs: { metric: 'allocs', source: '', fileName: '', imported: false, exportable: false },
-      goroutine: { metric: 'goroutine', source: '', fileName: '', imported: false, exportable: false }
+      goroutine: { metric: 'goroutine', source: '', fileName: '', imported: false, exportable: false },
+      block: { metric: 'block', source: '', fileName: '', imported: false, exportable: false },
+      mutex: { metric: 'mutex', source: '', fileName: '', imported: false, exportable: false },
+      threadcreate: { metric: 'threadcreate', source: '', fileName: '', imported: false, exportable: false }
     },
     preferences: loadPreferences('http://localhost:6060/debug/pprof'),
     metricInfo: [],
@@ -60,14 +77,17 @@ export function useLivePprof() {
 
   async function bootstrap() {
     try {
-      const [initialURL, metricInfo, appInfo, cpuMeta, heapMeta, allocsMeta, goroutineMeta] = await Promise.all([
+      const [initialURL, metricInfo, appInfo, cpuMeta, heapMeta, allocsMeta, goroutineMeta, blockMeta, mutexMeta, threadMeta] = await Promise.all([
         wailsApi.initialURL(),
         wailsApi.availableMetrics(),
         wailsApi.appInfo(),
         wailsApi.profileMeta('cpu'),
         wailsApi.profileMeta('heap'),
         wailsApi.profileMeta('allocs'),
-        wailsApi.profileMeta('goroutine')
+        wailsApi.profileMeta('goroutine'),
+        wailsApi.profileMeta('block'),
+        wailsApi.profileMeta('mutex'),
+        wailsApi.profileMeta('threadcreate')
       ])
       state.metricInfo = metricInfo
       state.appInfo = appInfo
@@ -75,12 +95,16 @@ export function useLivePprof() {
         cpu: cpuMeta,
         heap: heapMeta,
         allocs: allocsMeta,
-        goroutine: goroutineMeta
+        goroutine: goroutineMeta,
+        block: blockMeta,
+        mutex: mutexMeta,
+        threadcreate: threadMeta
       }
       state.preferences = loadPreferences(initialURL)
       state.ready = true
       if (state.preferences.endpointInput.trim()) {
         await detectEndpoints()
+        await refreshProfileCatalog()
       }
     } catch (error) {
       state.error = toMessage(error)
@@ -101,12 +125,28 @@ export function useLivePprof() {
     }
   }
 
+  async function refreshProfileCatalog() {
+    if (!state.preferences.endpointInput.trim()) return
+    state.loadingProfiles = true
+    try {
+      state.profileCatalog = await wailsApi.fetchProfileCatalog(state.preferences.endpointInput)
+    } catch (error) {
+      state.error = `Profiles: ${toMessage(error)}`
+      state.profileCatalog = []
+    } finally {
+      state.loadingProfiles = false
+    }
+  }
+
   function clearData() {
     state.graphData = {
       cpu: newGraphData(),
       heap: newGraphData(),
       allocs: newGraphData(),
-      goroutine: newGraphData()
+      goroutine: newGraphData(),
+      block: newGraphData(),
+      mutex: newGraphData(),
+      threadcreate: newGraphData()
     }
   }
 
@@ -181,6 +221,49 @@ export function useLivePprof() {
     }
   }
 
+  async function openProfileText(profile: string, debug: number) {
+    state.error = ''
+    state.profileFlamegraph = null
+    try {
+      state.profileRawText = await wailsApi.fetchProfileText(
+        state.preferences.endpointInput,
+        profile,
+        debug,
+        state.preferences.cpuProfileSeconds
+      )
+    } catch (error) {
+      state.error = `${profile} text: ${toMessage(error)}`
+    }
+  }
+
+  async function downloadProfile(profile: string, debug: number) {
+    state.error = ''
+    try {
+      await wailsApi.downloadProfile(
+        state.preferences.endpointInput,
+        profile,
+        debug,
+        state.preferences.cpuProfileSeconds
+      )
+    } catch (error) {
+      state.error = `${profile} download: ${toMessage(error)}`
+    }
+  }
+
+  async function openProfileFlamegraph(profile: string) {
+    state.error = ''
+    state.profileRawText = ''
+    try {
+      state.profileFlamegraph = await wailsApi.getProfileFlamegraph(
+        state.preferences.endpointInput,
+        profile,
+        state.preferences.cpuProfileSeconds
+      )
+    } catch (error) {
+      state.error = `${profile} flamegraph: ${toMessage(error)}`
+    }
+  }
+
   async function tick() {
     if (!state.recording) return
     state.error = ''
@@ -226,15 +309,22 @@ export function useLivePprof() {
       cpu: filterGraphDataByMinutes(state.graphData.cpu, state.preferences.timeRangeMinutes),
       heap: filterGraphDataByMinutes(state.graphData.heap, state.preferences.timeRangeMinutes),
       allocs: filterGraphDataByMinutes(state.graphData.allocs, state.preferences.timeRangeMinutes),
-      goroutine: filterGraphDataByMinutes(state.graphData.goroutine, state.preferences.timeRangeMinutes)
+      goroutine: filterGraphDataByMinutes(state.graphData.goroutine, state.preferences.timeRangeMinutes),
+      block: filterGraphDataByMinutes(state.graphData.block, state.preferences.timeRangeMinutes),
+      mutex: filterGraphDataByMinutes(state.graphData.mutex, state.preferences.timeRangeMinutes),
+      threadcreate: filterGraphDataByMinutes(state.graphData.threadcreate, state.preferences.timeRangeMinutes)
     })),
     bootstrap,
     detectEndpoints,
+    refreshProfileCatalog,
     startRecording,
     stopRecording,
     clearData,
     importProfile,
-    exportProfile
+    exportProfile,
+    openProfileText,
+    downloadProfile,
+    openProfileFlamegraph
   }
 }
 
