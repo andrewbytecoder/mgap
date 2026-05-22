@@ -48,10 +48,19 @@ export function importedTimelineGraphData(
   retainedSamples: number,
   cpuProfileSeconds: number
 ): GraphData {
-  return snapshots.reduce(
-    (graphData, snapshot) => appendGraphData(graphData, snapshot, metric, topN, retainedSamples, cpuProfileSeconds),
+  const graphData = snapshots.reduce(
+    (currentGraphData, snapshot) =>
+      appendGraphData(currentGraphData, snapshot, metric, topN, retainedSamples, cpuProfileSeconds),
     newGraphData()
   )
+
+  return {
+    ...graphData,
+    imported: true,
+    sourceLabel: snapshots[snapshots.length - 1]?.url,
+    stacks: snapshots[snapshots.length - 1]?.stacks,
+    rawText: snapshots[snapshots.length - 1]?.rawText
+  }
 }
 
 export function filterGraphDataByMinutes(graphData: GraphData, minutes: number): GraphData {

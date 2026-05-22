@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
-import * as echarts from 'echarts'
-import type { ECharts, EChartsOption } from 'echarts'
+import { computed } from 'vue'
+import type { EChartsOption } from 'echarts'
+import VChart from 'vue-echarts'
 import type { GraphData, MetricKey } from '../types'
 import { formatBytes, formatNumber, formatPercent } from '../utils/format'
 
@@ -17,9 +17,6 @@ type Row = {
   flat: number
   cum: number
 }
-
-const chartRef = ref<HTMLDivElement | null>(null)
-let chart: ECharts | undefined
 
 const rows = computed<Row[]>(() =>
   Object.values(props.data.lineTable)
@@ -108,30 +105,6 @@ const option = computed<EChartsOption>(() => {
   }
 })
 
-watch(
-  option,
-  value => {
-    chart?.setOption(value, true)
-  },
-  { deep: true }
-)
-
-onMounted(() => {
-  if (!chartRef.value) return
-  chart = echarts.init(chartRef.value)
-  chart.setOption(option.value, true)
-  window.addEventListener('resize', resize)
-})
-
-onBeforeUnmount(() => {
-  window.removeEventListener('resize', resize)
-  chart?.dispose()
-})
-
-function resize() {
-  chart?.resize()
-}
-
 function formatMetricValue(metric: MetricKey, value: number): string {
   if (metric === 'cpu') return formatPercent(value)
   if (metric === 'goroutine' || metric === 'threadcreate') return formatNumber(value)
@@ -146,7 +119,7 @@ function shorten(value: string): string {
 
 <template>
   <div class="imported-layout">
-    <div class="imported-chart" ref="chartRef" />
+    <VChart class="imported-chart" :option="option" autoresize />
     <div class="imported-table">
       <div class="table-header mono">
         <span>Function</span>
@@ -197,6 +170,7 @@ function shorten(value: string): string {
 }
 
 .imported-chart {
+  display: block;
   min-height: 360px;
   width: 100%;
 }

@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
-import * as echarts from 'echarts'
-import type { ECharts, EChartsOption, SeriesOption } from 'echarts'
+import { computed } from 'vue'
+import type { EChartsOption, SeriesOption } from 'echarts'
+import VChart from 'vue-echarts'
 import type { GraphData, MetricInfo, MetricKey } from '../types'
 import { formatBytes, formatNumber, formatPercent } from '../utils/format'
 
@@ -16,9 +16,6 @@ const props = defineProps<{
     smooth: boolean
   }
 }>()
-
-const chartRef = ref<HTMLDivElement | null>(null)
-let chart: ECharts | undefined
 
 const option = computed<EChartsOption>(() => {
   const axisValues = Object.values(props.data.lineTable).flatMap(line =>
@@ -102,30 +99,6 @@ const option = computed<EChartsOption>(() => {
   }
 })
 
-watch(
-  option,
-  value => {
-    chart?.setOption(value, true)
-  },
-  { deep: true }
-)
-
-onMounted(() => {
-  if (!chartRef.value) return
-  chart = echarts.init(chartRef.value)
-  chart.setOption(option.value, true)
-  window.addEventListener('resize', resize)
-})
-
-onBeforeUnmount(() => {
-  window.removeEventListener('resize', resize)
-  chart?.dispose()
-})
-
-function resize() {
-  chart?.resize()
-}
-
 function formatMetricValue(metric: MetricKey, value: number): string {
   if (metric === 'cpu') return formatPercent(value)
   if (metric === 'goroutine' || metric === 'threadcreate') return formatNumber(value)
@@ -162,5 +135,14 @@ function formatTooltip(items: any[], metric: MetricKey, mode: 'flat' | 'cum'): s
 </script>
 
 <template>
-  <div ref="chartRef" style="height: 100%; min-height: 320px; width: 100%" />
+  <VChart class="metric-chart" :option="option" autoresize />
 </template>
+
+<style scoped>
+.metric-chart {
+  display: block;
+  height: 100%;
+  min-height: 320px;
+  width: 100%;
+}
+</style>
