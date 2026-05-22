@@ -9,19 +9,21 @@ import (
 )
 
 type FlamegraphNode struct {
-	Name     string           `json:"name"`
-	FullName string           `json:"fullName"`
-	FileName string           `json:"fileName"`
-	Value    int64            `json:"value"`
-	Children []FlamegraphNode `json:"children"`
+	Name      string           `json:"name"`
+	FullName  string           `json:"fullName"`
+	FileName  string           `json:"fileName"`
+	Value     int64            `json:"value"`
+	SelfValue int64            `json:"selfValue"`
+	Children  []FlamegraphNode `json:"children"`
 }
 
 type mutableFlamegraphNode struct {
-	Name     string
-	FullName string
-	FileName string
-	Value    int64
-	Children map[string]*mutableFlamegraphNode
+	Name      string
+	FullName  string
+	FileName  string
+	Value     int64
+	SelfValue int64
+	Children  map[string]*mutableFlamegraphNode
 }
 
 func (s *Service) GetProfileFlamegraph(parent context.Context, input string, profile string, seconds uint64) (*FlamegraphNode, error) {
@@ -79,6 +81,9 @@ func buildFlamegraphTree(data []byte) (*FlamegraphNode, error) {
 
 		current := root
 		current.Value += value
+		if len(sample.Location) == 0 {
+			current.SelfValue += value
+		}
 
 		for i := len(sample.Location) - 1; i >= 0; i-- {
 			loc := sample.Location[i]
@@ -124,6 +129,9 @@ func buildFlamegraphTree(data []byte) (*FlamegraphNode, error) {
 					current.Children[key] = child
 				}
 				child.Value += value
+				if i == 0 && j == 0 {
+					child.SelfValue += value
+				}
 				current = child
 			}
 		}
@@ -139,11 +147,12 @@ func flattenFlamegraph(node *mutableFlamegraphNode) *FlamegraphNode {
 	}
 
 	return &FlamegraphNode{
-		Name:     node.Name,
-		FullName: node.FullName,
-		FileName: node.FileName,
-		Value:    node.Value,
-		Children: children,
+		Name:      node.Name,
+		FullName:  node.FullName,
+		FileName:  node.FileName,
+		Value:     node.Value,
+		SelfValue: node.SelfValue,
+		Children:  children,
 	}
 }
 

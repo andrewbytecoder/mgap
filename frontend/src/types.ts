@@ -65,6 +65,7 @@ export interface FlamegraphNode {
   fullName: string
   fileName: string
   value: number
+  selfValue?: number
   children: FlamegraphNode[]
 }
 

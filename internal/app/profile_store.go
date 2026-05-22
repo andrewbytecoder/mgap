@@ -12,6 +12,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/moderato-app/live-pprof/internal/metrics"
 	"github.com/moderato-app/pprof/moderato"
 	pprofProfile "github.com/moderato-app/pprof/profile"
 	"github.com/wailsapp/wails/v2/pkg/runtime"
@@ -160,6 +161,7 @@ func profileSnapshotFromData(metric string, source string, data []byte, timestam
 	if err != nil {
 		return nil, err
 	}
+	profileInfo, _ := metrics.ReadProfileInfo(data)
 
 	var stacks []GoroutineStack
 	var rawText string
@@ -187,10 +189,10 @@ func profileSnapshotFromData(metric string, source string, data []byte, timestam
 		}
 	}
 
-	return metricsToSnapshot(metric, source, mtr, timestamp, stacks, rawText), nil
+	return metricsToSnapshot(metric, source, mtr, timestamp, stacks, rawText, profileInfo), nil
 }
 
-func metricsToSnapshot(metric string, source string, mtr *moderato.Metrics, timestamp int64, stacks []GoroutineStack, rawText string) *MetricsSnapshot {
+func metricsToSnapshot(metric string, source string, mtr *moderato.Metrics, timestamp int64, stacks []GoroutineStack, rawText string, profileInfo *metrics.ProfileInfo) *MetricsSnapshot {
 	if timestamp == 0 {
 		timestamp = time.Now().UnixNano()
 	}
@@ -219,6 +221,42 @@ func metricsToSnapshot(metric string, source string, mtr *moderato.Metrics, time
 		Items:     items,
 		Stacks:    stacks,
 		RawText:   rawText,
+		DefaultSampleType: func() string {
+			if profileInfo == nil {
+				return ""
+			}
+			return profileInfo.DefaultSampleType
+		}(),
+		DefaultSampleUnit: func() string {
+			if profileInfo == nil {
+				return ""
+			}
+			return profileInfo.DefaultSampleUnit
+		}(),
+		DurationNanos: func() int64 {
+			if profileInfo == nil {
+				return 0
+			}
+			return profileInfo.DurationNanos
+		}(),
+		Period: func() int64 {
+			if profileInfo == nil {
+				return 0
+			}
+			return profileInfo.Period
+		}(),
+		PeriodType: func() string {
+			if profileInfo == nil {
+				return ""
+			}
+			return profileInfo.PeriodType
+		}(),
+		PeriodUnit: func() string {
+			if profileInfo == nil {
+				return ""
+			}
+			return profileInfo.PeriodUnit
+		}(),
 	}
 }
 
