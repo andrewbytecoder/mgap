@@ -12,7 +12,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/moderato-app/live-pprof/internal/metrics"
+	"github.com/andrewbytecoder/mgap/internal/metrics"
 	"github.com/moderato-app/pprof/moderato"
 	pprofProfile "github.com/moderato-app/pprof/profile"
 	"github.com/wailsapp/wails/v2/pkg/runtime"

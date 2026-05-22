@@ -6,8 +6,8 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/moderato-app/live-pprof/api"
-	"github.com/moderato-app/live-pprof/internal/logging"
+	"github.com/andrewbytecoder/mgap/api"
+	"github.com/andrewbytecoder/mgap/internal/logging"
 )
 
 // MockMetricsServer returns mock data instead of real data to save development time

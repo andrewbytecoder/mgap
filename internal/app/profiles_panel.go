@@ -16,7 +16,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/moderato-app/live-pprof/internal/metrics"
+	"github.com/andrewbytecoder/mgap/internal/metrics"
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 )
 

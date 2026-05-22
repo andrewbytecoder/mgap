@@ -1,6 +1,6 @@
 import type { Preferences } from '../types'
 
-const key = 'live-pprof-wails-preferences-v1'
+const key = 'mgap-wails-preferences-v1'
 
 export function defaultPreferences(initialURL: string): Preferences {
   return {

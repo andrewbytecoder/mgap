@@ -26,7 +26,7 @@ This starts the desktop shell and the frontend dev server together.
 wails build
 ```
 
-The packaged Windows executable is generated at [build/bin/live-pprof.exe](/E:/work/mgap/build/bin/live-pprof.exe).
+The packaged Windows executable is generated at [build/bin/mgap.exe](/E:/work/mgap/build/bin/mgap.exe).
 
 ## Usage
 
@@ -46,7 +46,7 @@ func main() {
 }
 ```
 
-#### Step 2: open `live-pprof` and enter one of these
+#### Step 2: open `mgap` and enter one of these
 
 ```text
 6060

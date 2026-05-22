@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/moderato-app/live-pprof/internal/metrics"
+	"github.com/andrewbytecoder/mgap/internal/metrics"
 	pprofprofile "github.com/moderato-app/pprof/profile"
 )
 

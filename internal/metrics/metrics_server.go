@@ -8,8 +8,8 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/moderato-app/live-pprof/api"
-	"github.com/moderato-app/live-pprof/internal/logging"
+	"github.com/andrewbytecoder/mgap/api"
+	"github.com/andrewbytecoder/mgap/internal/logging"
 
 	"github.com/moderato-app/pprof/moderato"
 	"github.com/moderato-app/pprof/profile"

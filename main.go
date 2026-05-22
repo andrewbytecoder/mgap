@@ -15,7 +15,7 @@ func main() {
 	app := NewApp()
 
 	err := wails.Run(&options.App{
-		Title:         "live-pprof",
+		Title:         "mgap",
 		Width:         1480,
 		Height:        960,
 		MinWidth:      1120,

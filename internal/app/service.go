@@ -13,8 +13,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/moderato-app/live-pprof/api"
-	"github.com/moderato-app/live-pprof/internal/metrics"
+	"github.com/andrewbytecoder/mgap/api"
+	"github.com/andrewbytecoder/mgap/internal/metrics"
 )
 
 type MetricInfo struct {

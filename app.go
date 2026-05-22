@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/moderato-app/live-pprof/internal/app"
+	"github.com/andrewbytecoder/mgap/internal/app"
 )
 
 type App struct {
