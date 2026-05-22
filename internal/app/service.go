@@ -43,13 +43,19 @@ type GoroutineStack struct {
 }
 
 type MetricsSnapshot struct {
-	Type      string           `json:"type"`
-	URL       string           `json:"url"`
-	Timestamp int64            `json:"timestamp"`
-	Total     int64            `json:"total"`
-	Items     []MetricPoint    `json:"items"`
-	Stacks    []GoroutineStack `json:"stacks,omitempty"`
-	RawText   string           `json:"rawText,omitempty"`
+	Type              string           `json:"type"`
+	URL               string           `json:"url"`
+	Timestamp         int64            `json:"timestamp"`
+	Total             int64            `json:"total"`
+	Items             []MetricPoint    `json:"items"`
+	Stacks            []GoroutineStack `json:"stacks,omitempty"`
+	RawText           string           `json:"rawText,omitempty"`
+	DefaultSampleType string           `json:"defaultSampleType,omitempty"`
+	DefaultSampleUnit string           `json:"defaultSampleUnit,omitempty"`
+	DurationNanos     int64            `json:"durationNanos,omitempty"`
+	Period            int64            `json:"period,omitempty"`
+	PeriodType        string           `json:"periodType,omitempty"`
+	PeriodUnit        string           `json:"periodUnit,omitempty"`
 }
 
 type EndpointResult struct {
@@ -182,11 +188,15 @@ func (s *Service) FetchMetrics(parent context.Context, input string, metric stri
 	defer cancel()
 
 	var rawData []byte
+	var profileInfo *metrics.ProfileInfo
 	profileURL, err := metrics.MetricsURL(false, metricType, baseURL, profileSeconds)
 	if err == nil && !useMock {
 		capturedAt := time.Now().UnixNano()
 		if data, fetchErr := metrics.FetchRawProfile(timeoutCtx, profileURL); fetchErr == nil {
 			rawData = data
+			if info, infoErr := metrics.ReadProfileInfo(data); infoErr == nil {
+				profileInfo = info
+			}
 			s.profiles.set(metric, profileBlob{
 				Metric:    metric,
 				Data:      data,
@@ -255,6 +265,42 @@ func (s *Service) FetchMetrics(parent context.Context, input string, metric stri
 		Items:     items,
 		Stacks:    stacks,
 		RawText:   rawText,
+		DefaultSampleType: func() string {
+			if profileInfo == nil {
+				return ""
+			}
+			return profileInfo.DefaultSampleType
+		}(),
+		DefaultSampleUnit: func() string {
+			if profileInfo == nil {
+				return ""
+			}
+			return profileInfo.DefaultSampleUnit
+		}(),
+		DurationNanos: func() int64 {
+			if profileInfo == nil {
+				return 0
+			}
+			return profileInfo.DurationNanos
+		}(),
+		Period: func() int64 {
+			if profileInfo == nil {
+				return 0
+			}
+			return profileInfo.Period
+		}(),
+		PeriodType: func() string {
+			if profileInfo == nil {
+				return ""
+			}
+			return profileInfo.PeriodType
+		}(),
+		PeriodUnit: func() string {
+			if profileInfo == nil {
+				return ""
+			}
+			return profileInfo.PeriodUnit
+		}(),
 	}, nil
 }
 

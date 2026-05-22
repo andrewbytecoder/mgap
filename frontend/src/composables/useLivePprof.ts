@@ -199,6 +199,9 @@ export function useLivePprof() {
     stopRecording()
     clearData()
     recordingSession += 1
+    if (state.preferences.sampleInterval < state.preferences.cpuProfileSeconds * 1000) {
+      state.preferences.sampleInterval = state.preferences.cpuProfileSeconds * 1000
+    }
     state.recording = true
     void tick()
   }

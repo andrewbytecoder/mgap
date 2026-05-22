@@ -33,6 +33,12 @@ export interface MetricsSnapshot {
   items: MetricPoint[]
   stacks?: GoroutineStack[]
   rawText?: string
+  defaultSampleType?: string
+  defaultSampleUnit?: string
+  durationNanos?: number
+  period?: number
+  periodType?: string
+  periodUnit?: string
 }
 
 export interface ProfileMeta {

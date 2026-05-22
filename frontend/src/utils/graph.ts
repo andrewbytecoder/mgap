@@ -23,8 +23,8 @@ export function importedGraphData(snapshot: MetricsSnapshot, metric: MetricKey, 
       points: [
         {
           date,
-          flat: normalizeMetricValue(metric, item.flat, cpuProfileSeconds, snapshot.total),
-          cum: normalizeMetricValue(metric, item.cum, cpuProfileSeconds, snapshot.total)
+          flat: normalizeMetricValue(metric, item.flat, snapshot, cpuProfileSeconds),
+          cum: normalizeMetricValue(metric, item.cum, snapshot, cpuProfileSeconds)
         }
       ]
     }
@@ -161,8 +161,8 @@ export function appendGraphData(
     const line = next.lineTable[key]
     line.points[line.points.length - 1] = {
       date,
-      flat: normalizeMetricValue(metric, item.flat, cpuProfileSeconds, snapshot.total),
-      cum: normalizeMetricValue(metric, item.cum, cpuProfileSeconds, snapshot.total)
+      flat: normalizeMetricValue(metric, item.flat, snapshot, cpuProfileSeconds),
+      cum: normalizeMetricValue(metric, item.cum, snapshot, cpuProfileSeconds)
     }
   }
 
@@ -171,25 +171,39 @@ export function appendGraphData(
     const lastPoint = totalLine.points[totalLine.points.length - 1]
     totalLine.points[totalLine.points.length - 1] = {
       ...lastPoint,
-      flat: normalizeMetricValue(metric, snapshot.total, cpuProfileSeconds, snapshot.total),
-      cum: normalizeMetricValue(metric, snapshot.total, cpuProfileSeconds, snapshot.total)
+      flat: normalizeMetricValue(metric, snapshot.total, snapshot, cpuProfileSeconds),
+      cum: normalizeMetricValue(metric, snapshot.total, snapshot, cpuProfileSeconds)
     }
   }
 
   return next
 }
 
-function normalizeMetricValue(metric: MetricKey, value: number, cpuProfileSeconds: number, cpuTotal: number): number {
+function normalizeMetricValue(metric: MetricKey, value: number, snapshot: MetricsSnapshot, cpuProfileSeconds: number): number {
   if (metric !== 'cpu') return value
-  const seconds = Math.max(cpuProfileSeconds, 1)
 
-  // CPU profiles may come back either as sampled counts or as CPU nanoseconds.
-  // Counts are usually in the tens/hundreds range per second, while nanoseconds are huge.
-  if (cpuTotal > seconds * 100_000) {
+  const seconds = Math.max((snapshot.durationNanos ?? 0) / 1_000_000_000, cpuProfileSeconds, 1)
+  const sampleUnit = (snapshot.defaultSampleUnit ?? '').toLowerCase()
+  const periodUnit = (snapshot.periodUnit ?? '').toLowerCase()
+  const period = snapshot.period ?? 0
+
+  if (sampleUnit === 'nanoseconds' || sampleUnit === 'ns') {
     return (value / (seconds * 1_000_000_000)) * 100
   }
 
-  // With Go's default 100Hz CPU sampling, one fully busy core is roughly 100 samples/sec.
-  // That makes "count per second" a good approximation of CPU percent.
+  if ((sampleUnit === 'count' || sampleUnit === 'samples' || sampleUnit === '') && period > 0) {
+    if (periodUnit === 'nanoseconds' || periodUnit === 'ns') {
+      return ((value * period) / (seconds * 1_000_000_000)) * 100
+    }
+    if (periodUnit === 'milliseconds' || periodUnit === 'ms') {
+      return ((value * period) / (seconds * 1_000)) * 100
+    }
+    if (periodUnit === 'microseconds' || periodUnit === 'us') {
+      return ((value * period) / (seconds * 1_000_000)) * 100
+    }
+  }
+
+  // Fallback for profiles where only sample counts are exposed.
+  // Go's CPU profiler commonly samples at 100Hz, so count/sec approximates CPU%.
   return value / seconds
 }

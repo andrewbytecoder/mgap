@@ -12,6 +12,7 @@ import (
 	"github.com/moderato-app/live-pprof/internal/logging"
 
 	"github.com/moderato-app/pprof/moderato"
+	"github.com/moderato-app/pprof/profile"
 )
 
 type MetricsServer struct {
@@ -74,6 +75,42 @@ func fetch(ctx context.Context, url string) (*moderato.Metrics, error) {
 	}
 
 	return mtr, nil
+}
+
+type ProfileInfo struct {
+	DefaultSampleType string
+	DefaultSampleUnit string
+	PeriodType        string
+	PeriodUnit        string
+	Period            int64
+	DurationNanos     int64
+}
+
+func ReadProfileInfo(data []byte) (*ProfileInfo, error) {
+	prof, err := profile.ParseData(data)
+	if err != nil {
+		return nil, err
+	}
+
+	index, err := prof.SampleIndexByName(prof.DefaultSampleType)
+	if err != nil {
+		return nil, err
+	}
+
+	info := &ProfileInfo{
+		DefaultSampleType: prof.DefaultSampleType,
+		DurationNanos:     prof.DurationNanos,
+		Period:            prof.Period,
+	}
+
+	if index >= 0 && index < len(prof.SampleType) {
+		info.DefaultSampleUnit = prof.SampleType[index].Unit
+	}
+	if prof.PeriodType != nil {
+		info.PeriodType = prof.PeriodType.Type
+		info.PeriodUnit = prof.PeriodType.Unit
+	}
+	return info, nil
 }
 
 func FetchRawProfile(ctx context.Context, url string) ([]byte, error) {
