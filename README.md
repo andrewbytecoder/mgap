@@ -1,6 +1,6 @@
-# live-pprof
+# mgap
 
-`live-pprof` is a desktop pprof monitor built with `Wails + Vue 3 + TypeScript + Vuetify`.
+`mgap` is a desktop pprof monitor built with `Wails + Vue 3 + TypeScript + Vuetify`.
 
 It keeps the original Go-side profile fetching and parsing logic, but the old browser-hosted Next.js frontend has been refactored into a Wails desktop app with a Vue/Vuetify UI.
 
