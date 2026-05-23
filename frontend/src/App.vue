@@ -384,32 +384,32 @@ function openLink(url: string) {
             </v-col>
           </v-row>
         </section>
+<!--        -->
+        <v-footer color="surface-light" class="px-4 flex-column py-1 mt-auto">
+          <div class="d-flex ga-3">
+            <v-tooltip
+                v-for="link in socialLinks"
+                :key="link.icon"
+                location="top"
+            >
+              <template #activator="{ props }">
+                <v-btn
+                    v-bind="props"
+                    :icon="link.icon"
+                    density="comfortable"
+                    variant="text"
+                    @click="openLink(link.url)"
+                ></v-btn>
+              </template>
+              <span>{{ link.tooltip }}</span>
+            </v-tooltip>
+          </div>
+          <v-divider class="my-2" thickness="2" width="50"></v-divider>
+          <div class="text-center w-100 text-caption">
+            © {{ new Date().getFullYear() }} — <strong>monitor go application profile</strong>. All rights reserved.
+          </div>
+        </v-footer>
       </div>
-      <v-footer app color="surface-light" class="px-4 flex-column py-2">
-        <div class="d-flex ga-3">
-          <v-tooltip
-              v-for="link in socialLinks"
-              :key="link.icon"
-              location="top"
-          >
-            <!--                        具名插槽应用 -->
-            <template #activator="{ props }">
-              <v-btn
-                  v-bind="props"
-                  :icon="link.icon"
-                  density="comfortable"
-                  variant="text"
-                  @click="openLink(link.url)"
-              ></v-btn>
-            </template>
-            <span>{{ link.tooltip }}</span>
-          </v-tooltip>
-        </div>
-        <v-divider class="my-2" thickness="2" width="50"></v-divider>
-        <div class="text-center w-100 text-caption">
-          © {{ new Date().getFullYear() }} — <strong>monitor go application profile</strong>. All rights reserved.
-        </div>
-      </v-footer>
     </v-main>
   </v-app>
 </template>
