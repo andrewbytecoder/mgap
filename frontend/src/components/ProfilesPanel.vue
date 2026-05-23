@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import FlamegraphView from './FlamegraphView.vue'
-import type { FlamegraphNode, ProfileCatalogEntry } from '../types'
+import type { FlamegraphNode, ProfileCatalogEntry } from '@/types'
 
 const props = defineProps<{
   entries: ProfileCatalogEntry[]
@@ -66,45 +66,56 @@ function toggle(name: string) {
           <span class="description">{{ entry.description || 'No description available.' }}</span>
           <div class="action-buttons">
             <v-fab
-                :key=""
-                :absolute="fabPosition === 'absolute'"
-                :app="fabPosition === 'fixed'"
-                :color="open ? '' : 'primary'"
-                :location="fabLocation"
-                size="large"
-                icon
+              v-if="entry.supportsImport || entry.supportsExport || entry.supportsRawText || entry.supportsFlame"
+              size="small"
+              icon
+              variant="tonal"
+              color="primary"
             >
-              <v-icon>{{ open ? 'mdi-close' : 'mdi-crown' }}</v-icon>
-              <v-speed-dial v-model="open" :location="menuLocation" :transition="transition" activator="parent">
-                <v-btn key="1" color="success" icon>
-                  <v-icon size="24">$success</v-icon>
+              <v-icon>mdi-dots-vertical</v-icon>
+
+              <v-speed-dial
+                location="bottom center"
+                transition="slide-y-transition"
+                activator="parent"
+              >
+                <v-btn
+                  v-if="entry.supportsImport"
+                  key="import"
+                  prepend-icon="mdi-file-import-outline"
+                  @click="emit('importProfile', entry.name)"
+                >
+                  Import
                 </v-btn>
 
-                <v-btn key="2" color="info" icon>
-                  <v-icon size="24">$info</v-icon>
+                <v-btn
+                  v-if="entry.supportsExport"
+                  key="export"
+                  prepend-icon="mdi-download"
+                  @click="emit('downloadProfile', entry.name, entry.name === 'goroutine' ? 2 : 1)"
+                >
+                  Download
                 </v-btn>
 
-                <v-btn key="3" color="warning" icon>
-                  <v-icon size="24">$warning</v-icon>
+                <v-btn
+                  v-if="entry.supportsRawText"
+                  key="text"
+                  prepend-icon="mdi-text-box-search-outline"
+                  @click="emit('openText', entry.name, entry.name === 'goroutine' ? 2 : 1)"
+                >
+                  Text
                 </v-btn>
 
-                <v-btn key="4" color="error" icon>
-                  <v-icon size="24">$error</v-icon>
+                <v-btn
+                  v-if="entry.supportsFlame"
+                  key="flame"
+                  prepend-icon="mdi-fire"
+                  @click="emit('openFlame', entry.name)"
+                >
+                  Flame
                 </v-btn>
               </v-speed-dial>
             </v-fab>
-            <v-btn v-if="entry.supportsImport" size="small" variant="tonal" prepend-icon="mdi-file-import-outline" @click="emit('importProfile', entry.name)">
-              Import
-            </v-btn>
-            <v-btn v-if="entry.supportsExport" size="small" variant="tonal" prepend-icon="mdi-download" @click="emit('downloadProfile', entry.name, entry.name === 'goroutine' ? 2 : 1)">
-              Download
-            </v-btn>
-            <v-btn v-if="entry.supportsRawText" size="small" variant="tonal" prepend-icon="mdi-text-box-search-outline" @click="emit('openText', entry.name, entry.name === 'goroutine' ? 2 : 1)">
-              Text
-            </v-btn>
-            <v-btn v-if="entry.supportsFlame" size="small" variant="tonal" prepend-icon="mdi-fire" @click="emit('openFlame', entry.name)">
-              Flame
-            </v-btn>
           </div>
         </div>
 

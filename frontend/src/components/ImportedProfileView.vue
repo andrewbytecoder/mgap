@@ -2,7 +2,7 @@
 import { computed } from 'vue'
 import type { EChartsOption } from 'echarts'
 import VChart from 'vue-echarts'
-import type { GraphData, MetricKey } from '@/types'
+import type { GraphData, MetricKey, SeriesLine } from '@/types'
 import { formatBytes, formatNumber, formatPercent } from '@/utils/format'
 
 const props = defineProps<{
@@ -19,7 +19,7 @@ type Row = {
 }
 
 const rows = computed<Row[]>(() =>
-  Object.values(props.data.lineTable)
+  Object.values<SeriesLine>(props.data.lineTable)
     .map(line => {
       const point = line.points[0]
       return {
