@@ -11,9 +11,6 @@ import (
 //go:embed all:frontend/dist
 var assets embed.FS
 
-//go:embed build/appicon.png
-var icon []byte
-
 func main() {
 	app := NewApp()
 
@@ -26,7 +23,6 @@ func main() {
 		Frameless:     true,
 		DisableResize: false,
 		StartHidden:   false,
-		Icon:          icon,
 		AssetServer: &assetserver.Options{
 			Assets: assets,
 		},
