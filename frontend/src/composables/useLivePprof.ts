@@ -1,7 +1,7 @@
 import { computed, onBeforeUnmount, reactive, watch } from 'vue'
-import { wailsApi } from '../wails'
+import { wailsApi } from '@/wails'
 import { appendGraphData, filterGraphDataByMinutes, importedGraphData, importedTimelineGraphData, newGraphData } from '../utils/graph'
-import { loadPreferences, savePreferences } from '../services/preferences'
+import { loadPreferences, savePreferences } from '@/services/preferences'
 import type { EndpointResult, FlamegraphNode, GraphData, MetricInfo, MetricKey, Preferences, ProfileCatalogEntry, ProfileMeta } from '../types'
 
 const metricKeys: MetricKey[] = ['cpu', 'heap', 'allocs', 'goroutine', 'block', 'mutex', 'threadcreate']

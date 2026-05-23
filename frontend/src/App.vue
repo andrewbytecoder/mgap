@@ -7,6 +7,7 @@ import TitleBar from './components/TitleBar.vue'
 import { useLivePprof } from './composables/useLivePprof'
 import { formatBytes, formatNumber, formatPercent, formatTimestamp } from './utils/format'
 import type { MetricKey } from './types'
+import GoCheerful from "@/assets/icons/go-cheerful.svg";
 
 const {
   state,
@@ -25,6 +26,14 @@ const {
   downloadProfile,
   openProfileFlamegraph
 } = useLivePprof()
+
+function toggleRecording() {
+  if (state.recording) {
+    stopRecording()
+  } else {
+    startRecording()
+  }
+}
 
 const statusText = computed(() => (state.recording ? 'Sampling live profiles' : 'Idle'))
 const hiddenMetrics = computed(() =>
@@ -113,7 +122,13 @@ function openLink(url: string) {
                   <p class="section-kicker">Connection</p>
                   <h2>Endpoint</h2>
                 </div>
-                <v-chip color="secondary" variant="flat" class="mono">{{ state.preferences.useMock ? 'Mock' : 'Live' }}</v-chip>
+                <v-chip
+                    :prepend-icon="GoCheerful"
+                    color="secondary"
+                    variant="flat"
+                    class="mono">
+                  {{ state.preferences.useMock ? 'mock' : 'live' }}
+                </v-chip>
               </div>
 
               <v-text-field
@@ -153,7 +168,7 @@ function openLink(url: string) {
                   variant="flat"
                   :disabled="hasEndpointError"
                   :prepend-icon="state.recording ? 'mdi-stop-circle-outline' : 'mdi-play-circle-outline'"
-                  @click="state.recording ? stopRecording() : startRecording()"
+                  @click="toggleRecording"
                 >
                   {{ state.recording ? 'Stop' : 'Start' }}
                 </v-btn>
