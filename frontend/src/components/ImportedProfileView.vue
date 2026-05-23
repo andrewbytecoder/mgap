@@ -19,7 +19,7 @@ type Row = {
 }
 
 const rows = computed<Row[]>(() =>
-  Object.values<SeriesLine>(props.data.lineTable)
+  Object.values(props.data.lineTable)
     .map(line => {
       const point = line.points[0]
       return {

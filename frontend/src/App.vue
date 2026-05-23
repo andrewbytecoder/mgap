@@ -168,7 +168,7 @@ function openLink(url: string) {
                   variant="flat"
                   :disabled="hasEndpointError"
                   :prepend-icon="state.recording ? 'mdi-stop-circle-outline' : 'mdi-play-circle-outline'"
-                  @click="toggleRecording"
+                  @click="state.recording ? stopRecording() : startRecording()"
                 >
                   {{ state.recording ? 'Stop' : 'Start' }}
                 </v-btn>

@@ -1,5 +1,5 @@
-import type { GraphData, MetricPoint, MetricsSnapshot, SeriesPoint } from '../types'
-import type { MetricKey } from '../types'
+import type { GraphData, MetricPoint, MetricsSnapshot, SeriesPoint } from '@/types'
+import type { MetricKey } from '@/types'
 
 const stickySampleWindow = 4
 
@@ -118,7 +118,7 @@ export function appendGraphData(
 
   const date = new Date(snapshot.timestamp / 1_000_000)
   const sortedItems = [...snapshot.items]
-    .filter(item => item.flat > 0)
+    .filter(item => item.flat >= 0 || item.cum >= 0)
     .sort((left, right) => right.flat - left.flat)
 
   next.dates.push(date)

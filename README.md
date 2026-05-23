@@ -1,36 +1,71 @@
-# mgap
+# MGAP - monitor go application profile
 
-`mgap` is a desktop pprof monitor built with `Wails + Vue 3 + TypeScript + Vuetify`.
+[English](README.md) | [简体中文](README_zh.md)
 
-It keeps the original Go-side profile fetching and parsing logic, but the old browser-hosted Next.js frontend has been refactored into a Wails desktop app with a Vue/Vuetify UI.
+**mgap** (monitor go application profile) is a lightweight desktop pprof monitor built with [Wails](https://wails.io). It fetches, parses, and visualizes Go runtime profiles in real time, so you don't have to juggle browser tabs and local web servers.
 
-## Stack
+---
 
-- Go backend for fetching and parsing pprof data
-- Wails desktop shell
-- Vue 3 + TypeScript frontend
-- Vuetify UI components
-- ECharts timeline charts
+## Features
 
-## Run In Dev
+- **Live Profile Sampling** — continuously sample heap, CPU, allocs, goroutine, block, mutex, and threadcreate profiles.
+- **Auto Endpoint Detection** — just enter a port (e.g. `6060`) or a partial URL and the app discovers `/debug/pprof` endpoints automatically.
+- **Real-time Charts** — top-function timelines powered by ECharts, with configurable time ranges and Top-N filtering.
+- **Flamegraph View** — interactive flamegraph for quick hotspot analysis.
+- **Import / Export** — import existing profile files or export captured snapshots for offline inspection.
+- **Raw Text View** — browser-like plain-text profile output when you need the raw numbers.
+- **Mock Data Mode** — built-in mock data for UI testing without a live Go process.
+- **Frameless Desktop Shell** — custom title bar with drag-to-move, edge-snap maximize / half-screen layout, minimize, and close.
+- **Cross Platform** — Windows, macOS, and Linux support via Wails.
+
+---
+
+## Tech Stack
+
+| Layer | Technology |
+|---|---|
+| Backend | Go 1.23 |
+| Desktop Shell | Wails v2 |
+| Frontend | Vue 3 + TypeScript |
+| UI Components | Vuetify 3 |
+| Charts | ECharts + vue-echarts |
+| Protocol Buffers | google.golang.org/protobuf |
+
+---
+
+## Quick Start
+
+### Prerequisites
+
+- [Go](https://go.dev/dl/) 1.23+
+- [Wails CLI](https://wails.io/docs/gettingstarted/installation) v2.12+
+- [Node.js](https://nodejs.org/) 18+
+
+### Run in Development
 
 ```bash
 wails dev
 ```
 
-This starts the desktop shell and the frontend dev server together.
+This starts the Go backend and the Vite frontend dev server simultaneously with hot-reload.
 
-## Build
+### Build
 
 ```bash
 wails build
 ```
 
-The packaged Windows executable is generated at [build/bin/mgap.exe](/E:/work/mgap/build/bin/mgap.exe).
+The packaged executable is generated at:
+
+- **Windows**: `build/bin/mgap.exe`
+- **macOS**: `build/bin/mgap.app`
+- **Linux**: `build/bin/mgap`
+
+---
 
 ## Usage
 
-#### Step 1: expose pprof endpoints in your Go app
+### 1. Expose pprof endpoints in your Go app
 
 ```go
 package main
@@ -46,7 +81,9 @@ func main() {
 }
 ```
 
-#### Step 2: open `mgap` and enter one of these
+### 2. Open mgap and connect
+
+Enter any of the following in the **Endpoint** input:
 
 ```text
 6060
@@ -54,15 +91,31 @@ localhost:6060
 http://localhost:6060/debug/pprof
 ```
 
-The desktop app normalizes the input to the base pprof endpoint and can:
+The app normalizes the input and probes the available profiles.
 
-- Detect the main `/debug/pprof` endpoint plus heap, CPU, allocs and goroutine sub-endpoints
-- Sample heap, CPU, allocs and goroutine profiles on an interval
-- Visualize top functions over time with ECharts
-- Switch between live data and embedded mock data
+### 3. Start sampling
+
+Click **Start** to begin periodic sampling. Toggle individual metrics on/off, switch between **Flat** and **Cumulative** views, and adjust the **Top N** filter.
+
+---
+
+## Keyboard Shortcuts & Window Behavior
+
+- **Drag title bar** — move the window.
+- **Drag to screen top** — maximize.
+- **Drag to left / right screen edge** — snap to half-screen.
+- **Double-click title bar** — toggle maximize.
+
+---
 
 ## Notes
 
-- Metrics history is kept in window memory and resets when the desktop app reloads.
-- Large retained-sample counts still make charts heavier to render.
-- This is intended for local development and quick inspection, not as a replacement for Prometheus and Grafana.
+- Profile history is kept in memory and resets when the app restarts.
+- Large retained-sample counts can make charts heavier to render.
+- This tool is intended for **local development and quick inspection**, not as a replacement for Prometheus / Grafana.
+
+---
+
+## License
+
+MIT
