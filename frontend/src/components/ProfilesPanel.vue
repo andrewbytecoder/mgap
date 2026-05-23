@@ -2,6 +2,8 @@
 import { ref } from 'vue'
 import FlamegraphView from './FlamegraphView.vue'
 import type { FlamegraphNode, ProfileCatalogEntry } from '@/types'
+import colors from 'vuetify/util/colors'
+
 
 const props = defineProps<{
   entries: ProfileCatalogEntry[]
@@ -69,53 +71,64 @@ function toggle(name: string) {
               v-if="entry.supportsImport || entry.supportsExport || entry.supportsRawText || entry.supportsFlame"
               size="small"
               icon
-              variant="tonal"
-              color="primary"
+              variant="flat"
+              color="#f6fff7"
             >
-              <v-icon>mdi-dots-vertical</v-icon>
+            <v-icon>mdi-dots-vertical</v-icon>
 
-              <v-speed-dial
-                location="bottom center"
-                transition="slide-y-transition"
-                activator="parent"
-              >
-                <v-btn
-                  v-if="entry.supportsImport"
-                  key="import"
-                  prepend-icon="mdi-file-import-outline"
-                  @click="emit('importProfile', entry.name)"
-                >
-                  Import
-                </v-btn>
-
-                <v-btn
-                  v-if="entry.supportsExport"
-                  key="export"
-                  prepend-icon="mdi-download"
-                  @click="emit('downloadProfile', entry.name, entry.name === 'goroutine' ? 2 : 1)"
-                >
-                  Download
-                </v-btn>
-
-                <v-btn
+            <v-speed-dial
+              location="bottom center"
+              transition="slide-y-transition"
+              activator="parent"
+            >
+              <v-btn
                   v-if="entry.supportsRawText"
                   key="text"
+                  class="speed-dial-btn"
+                  variant="flat"
+                  color="#1e88e5"
                   prepend-icon="mdi-text-box-search-outline"
                   @click="emit('openText', entry.name, entry.name === 'goroutine' ? 2 : 1)"
-                >
-                  Text
-                </v-btn>
+              >
+                Text
+              </v-btn>
 
-                <v-btn
+              <v-btn
                   v-if="entry.supportsFlame"
                   key="flame"
+                  class="speed-dial-btn"
+                  variant="flat"
+                  color="#ff8a65"
                   prepend-icon="mdi-fire"
                   @click="emit('openFlame', entry.name)"
-                >
-                  Flame
-                </v-btn>
-              </v-speed-dial>
-            </v-fab>
+              >
+                Flame
+              </v-btn>
+              <v-btn
+                  v-if="entry.supportsExport"
+                  key="export"
+                  class="speed-dial-btn"
+                  variant="flat"
+                  color="#273d31"
+                  prepend-icon="mdi-download"
+                  @click="emit('downloadProfile', entry.name, entry.name === 'goroutine' ? 2 : 1)"
+              >
+                Download
+              </v-btn>
+              <v-btn
+                v-if="entry.supportsImport"
+                key="import"
+                class="speed-dial-btn"
+                variant="flat"
+                color="#26a69a"
+                prepend-icon="mdi-file-import-outline"
+                @click="emit('importProfile', entry.name)"
+              >
+                Import
+              </v-btn>
+
+            </v-speed-dial>
+          </v-fab>
           </div>
         </div>
 
@@ -213,6 +226,7 @@ function toggle(name: string) {
   flex-wrap: wrap;
   gap: 8px;
   justify-content: flex-end;
+  justify-self: end;
 }
 
 .profiles-detail {
@@ -268,7 +282,12 @@ function toggle(name: string) {
 
   .action-buttons {
     grid-column: 1 / -1;
-    justify-content: flex-start;
+    justify-content: flex-end;
   }
+}
+
+.speed-dial-btn {
+  min-width: 140px !important;
+  justify-content: flex-start !important;
 }
 </style>

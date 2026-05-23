@@ -49,6 +49,35 @@ function metricSummary(metric: MetricKey): string {
   if (metric === 'goroutine') return `${formatNumber(total)} goroutines at ${latestDate.toLocaleTimeString()}`
   return `${formatBytes(total)} at ${latestDate.toLocaleTimeString()}`
 }
+
+const socialLinks = [
+  {
+    icon: 'mdi-github',
+    url: 'https://github.com/andrewbytecoder/mgap',  // 替换为您的 GitHub 地址
+    tooltip: 'GitHub Repository'
+  },
+  {
+    icon: 'mdi-email',
+    url: 'mailto:wangyazhoujy@gmail.com',  // 替换为您的邮箱
+    tooltip: 'Contact wangyazhoujy@gmail.com'
+  },
+  {
+    icon: 'mdi-sina-weibo',
+    url: 'https://weibo.com/andrewbytecoder',  // 替换为您的 Instagram
+    tooltip: 'Follow us on sina'
+  },
+];
+
+function openLink(url: string) {
+  if (url.startsWith('mailto:')) {
+    window.location.href = url;  // 使用系统默认邮件客户端
+  } else {
+    window.open(url, '_blank');   // 其他链接在新标签页打开
+  }
+}
+
+
+
 </script>
 
 <template>
@@ -356,6 +385,31 @@ function metricSummary(metric: MetricKey): string {
           </v-row>
         </section>
       </div>
+      <v-footer app color="surface-light" class="px-4 flex-column py-2">
+        <div class="d-flex ga-3">
+          <v-tooltip
+              v-for="link in socialLinks"
+              :key="link.icon"
+              location="top"
+          >
+            <!--                        具名插槽应用 -->
+            <template #activator="{ props }">
+              <v-btn
+                  v-bind="props"
+                  :icon="link.icon"
+                  density="comfortable"
+                  variant="text"
+                  @click="openLink(link.url)"
+              ></v-btn>
+            </template>
+            <span>{{ link.tooltip }}</span>
+          </v-tooltip>
+        </div>
+        <v-divider class="my-2" thickness="2" width="50"></v-divider>
+        <div class="text-center w-100 text-caption">
+          © {{ new Date().getFullYear() }} — <strong>monitor go application profile</strong>. All rights reserved.
+        </div>
+      </v-footer>
     </v-main>
   </v-app>
 </template>
