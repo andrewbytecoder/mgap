@@ -4,6 +4,10 @@
 
 **mgap**（monitor go application profile）是一款基于 [Wails](https://wails.io) 的轻量级桌面 pprof 监控工具。它实时获取、解析并可视化 Go 运行时性能分析数据，无需在浏览器和本地 Web 服务之间来回切换。
 
+![img.png](screenshots/endpoint-detection.png)
+
+![img.png](screenshots/mgap.gif)
+
 ---
 
 ## 功能特性

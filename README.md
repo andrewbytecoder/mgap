@@ -4,6 +4,11 @@
 
 **mgap** (monitor go application profile) is a lightweight desktop pprof monitor built with [Wails](https://wails.io). It fetches, parses, and visualizes Go runtime profiles in real time, so you don't have to juggle browser tabs and local web servers.
 
+![img.png](screenshots/endpoint-detection.png)
+
+![img.png](screenshots/mgap.gif)
+
+
 ---
 
 ## Features
