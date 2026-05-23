@@ -6,6 +6,8 @@ import {
   WindowIsMaximised,
   WindowUnmaximise,
   WindowSetPosition,
+  WindowSetSize,
+  WindowMaximise,
   Quit
 } from '../../wailsjs/runtime'
 import GoLearnIcon from '@/assets/icons/go-learn.svg'
@@ -66,8 +68,28 @@ function onMouseMove(e: MouseEvent) {
   WindowSetPosition(windowStartX.value + deltaX, windowStartY.value + deltaY)
 }
 
-function onMouseUp() {
+async function onMouseUp(e: MouseEvent) {
+  if (!isDragging.value) return
   isDragging.value = false
+
+  const threshold = 8
+  const screenW = window.screen.width
+  const screenH = window.screen.availHeight
+  const x = e.screenX
+  const y = e.screenY
+
+  if (y < threshold) {
+    WindowMaximise()
+    isMaximised.value = true
+  } else if (x < threshold) {
+    WindowSetPosition(0, 0)
+    WindowSetSize(Math.floor(screenW / 2), screenH)
+    isMaximised.value = false
+  } else if (x > screenW - threshold) {
+    WindowSetPosition(Math.floor(screenW / 2), 0)
+    WindowSetSize(Math.floor(screenW / 2), screenH)
+    isMaximised.value = false
+  }
 }
 
 onMounted(() => {

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import type { FlamegraphNode } from '../types'
-import { formatBytes, formatNumber, formatPercent } from '../utils/format'
+import type { FlamegraphNode } from '@/types'
+import { formatBytes, formatNumber, formatPercent } from '@/utils/format'
 
 const props = defineProps<{
   root: FlamegraphNode | null
