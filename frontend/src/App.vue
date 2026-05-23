@@ -385,7 +385,7 @@ function openLink(url: string) {
           </v-row>
         </section>
 <!--        -->
-        <v-footer color="surface-light" class="px-4 flex-column py-1 mt-auto">
+        <v-footer color="surface-light" class="px-4 flex-column py-1 app-footer">
           <div class="d-flex ga-3">
             <v-tooltip
                 v-for="link in socialLinks"
@@ -628,6 +628,11 @@ h1 {
 
 .chart-shell {
   height: 380px;
+}
+
+.app-footer {
+  margin-top: 16px;
+  border-radius: 16px 16px 0 0 !important;
 }
 
 .empty-chart {
