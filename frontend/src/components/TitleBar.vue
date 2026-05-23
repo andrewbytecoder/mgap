@@ -8,6 +8,12 @@ import {
   WindowSetPosition,
   Quit
 } from '../../wailsjs/runtime'
+import GoLearnIcon from '@/assets/icons/go-learn.svg'
+
+function goLearn() {
+  // TODO: add learn/help action here
+}
+
 
 const isDragging = ref(false)
 const dragStartX = ref(0)
@@ -79,7 +85,11 @@ onUnmounted(() => {
 <template>
   <div class="titlebar">
     <div class="titlebar-drag-region" @mousedown="onMouseDown">
-      <div class="titlebar-title">MGAP</div>
+      <v-btn
+          size="small"
+          variant="tonal"
+          :prepend-icon="GoLearnIcon"
+          @click="goLearn">MGAP</v-btn>
     </div>
     <div class="titlebar-buttons">
       <button class="titlebar-button" @click="WindowMinimise" title="最小化">

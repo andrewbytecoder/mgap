@@ -2,8 +2,8 @@
 import { computed } from 'vue'
 import type { EChartsOption } from 'echarts'
 import VChart from 'vue-echarts'
-import type { GraphData, MetricKey } from '../types'
-import { formatBytes, formatNumber, formatPercent } from '../utils/format'
+import type { GraphData, MetricKey } from '@/types'
+import { formatBytes, formatNumber, formatPercent } from '@/utils/format'
 
 const props = defineProps<{
   data: GraphData

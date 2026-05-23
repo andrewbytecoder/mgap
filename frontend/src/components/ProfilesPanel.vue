@@ -65,6 +65,34 @@ function toggle(name: string) {
           <span class="mono">{{ entry.count }}</span>
           <span class="description">{{ entry.description || 'No description available.' }}</span>
           <div class="action-buttons">
+            <v-fab
+                :key=""
+                :absolute="fabPosition === 'absolute'"
+                :app="fabPosition === 'fixed'"
+                :color="open ? '' : 'primary'"
+                :location="fabLocation"
+                size="large"
+                icon
+            >
+              <v-icon>{{ open ? 'mdi-close' : 'mdi-crown' }}</v-icon>
+              <v-speed-dial v-model="open" :location="menuLocation" :transition="transition" activator="parent">
+                <v-btn key="1" color="success" icon>
+                  <v-icon size="24">$success</v-icon>
+                </v-btn>
+
+                <v-btn key="2" color="info" icon>
+                  <v-icon size="24">$info</v-icon>
+                </v-btn>
+
+                <v-btn key="3" color="warning" icon>
+                  <v-icon size="24">$warning</v-icon>
+                </v-btn>
+
+                <v-btn key="4" color="error" icon>
+                  <v-icon size="24">$error</v-icon>
+                </v-btn>
+              </v-speed-dial>
+            </v-fab>
             <v-btn v-if="entry.supportsImport" size="small" variant="tonal" prepend-icon="mdi-file-import-outline" @click="emit('importProfile', entry.name)">
               Import
             </v-btn>
