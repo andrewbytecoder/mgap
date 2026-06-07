@@ -8,6 +8,27 @@ import { useLivePprof } from './composables/useLivePprof'
 import { formatBytes, formatNumber, formatPercent, formatTimestamp } from './utils/format'
 import type { MetricKey } from './types'
 import GoCheerful from "@/assets/icons/go-cheerful.svg";
+import { createTimeline, stagger, splitText } from 'animejs';
+
+onMounted(() => {
+
+  const { chars } = splitText('p', {
+    chars: {
+      wrap: 'clip',
+      clone: 'bottom'
+    },
+  });
+
+  createTimeline()
+      .add(chars, {
+        y: '-100%',
+        loop: true,
+        loopDelay: 350,
+        duration: 750,
+        ease: 'inOut(2)',
+      }, stagger(150, { from: 'center' }));
+});
+
 
 const {
   state,
@@ -98,7 +119,9 @@ function openLink(url: string) {
         <section class="hero">
           <div class="hero-copy">
             <h1>MGAP</h1>
-            <p class="eyebrow">monitor go app pprof</p>
+            <div class="large centered row">
+              <p class="text-xl eyebrow">monitor go app pprof.</p>
+            </div>
             <p class="hero-text">
               Track heap, allocs, CPU and goroutine profiles from a desktop app instead of juggling a browser tab and a
               local web server.
@@ -219,8 +242,10 @@ function openLink(url: string) {
               </div>
 
               <v-skeleton-loader v-if="!state.ready" type="list-item-three-line" />
+<!--               扩展panels -->
               <v-expansion-panels v-else variant="accordion">
                 <v-expansion-panel v-for="result in state.detectResults" :key="result.endpoint">
+<!--                  标题-->
                   <v-expansion-panel-title>
                     <div class="endpoint-row">
                       <span class="mono endpoint-name">{{ result.endpoint }}</span>
@@ -235,9 +260,10 @@ function openLink(url: string) {
                       <v-chip v-if="result.error" color="error" size="small" variant="tonal">Error</v-chip>
                     </div>
                   </v-expansion-panel-title>
+<!--                  展示的内容-->
                   <v-expansion-panel-text>
                     <p v-if="result.error" class="error-copy">{{ result.error }}</p>
-                    <pre v-if="result.body" class="endpoint-body mono">{{ result.body }}</pre>
+                    <pre v-if="result.body" class="endpoint-body mono">response code {{ result.statusCode }}</pre>
                     <p v-if="!result.body && !result.error" class="subtle-copy">No response body returned.</p>
                   </v-expansion-panel-text>
                 </v-expansion-panel>
@@ -437,6 +463,29 @@ function openLink(url: string) {
   background: #f5f6f0;
   display: flex;
   flex-direction: column;
+}
+
+.char-3d {
+  position: relative;
+  transform-style: preserve-3d;
+  transform-origin: 50% 50% 1rem;
+}
+
+.face {
+  position: absolute;
+  left: 0;
+}
+
+.face-bottom {
+  top: 100%;
+  transform-origin: 50% 0%;
+  transform: rotateX(90deg);
+}
+
+.face-top {
+  bottom: 100%;
+  transform-origin: 50% 100%;
+  transform: rotateX(-90deg);
 }
 
 .hero {

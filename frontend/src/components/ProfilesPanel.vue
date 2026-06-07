@@ -26,6 +26,14 @@ const expanded = ref<string | null>(null)
 function toggle(name: string) {
   expanded.value = expanded.value === name ? null : name
 }
+
+async function copyRawText(rawText: string) {
+  try {
+    await navigator.clipboard.writeText(rawText)
+  } catch (e) {
+    console.error('Failed to copy:', e)
+  }
+}
 </script>
 
 <template>
@@ -67,6 +75,7 @@ function toggle(name: string) {
           <span class="mono">{{ entry.count }}</span>
           <span class="description">{{ entry.description || 'No description available.' }}</span>
           <div class="action-buttons">
+<!--            下拉多按钮按钮-->
             <v-fab
               v-if="entry.supportsImport || entry.supportsExport || entry.supportsRawText || entry.supportsFlame"
               size="small"
@@ -75,7 +84,7 @@ function toggle(name: string) {
               color="#f6fff7"
             >
             <v-icon>mdi-dots-vertical</v-icon>
-
+<!-- 下拉框中的按钮 -->
             <v-speed-dial
               location="bottom center"
               transition="slide-y-transition"
@@ -143,7 +152,17 @@ function toggle(name: string) {
     </div>
 
     <div v-if="rawText" class="raw-view">
-      <div class="raw-view-header">Profile Text View</div>
+      <div class="raw-view-header" style="display: flex; justify-content: space-between; align-items: center;">
+        <span>Profile Text View</span>
+        <v-btn
+          variant="flat"
+          color="#273d31"
+          prepend-icon="mdi-content-copy"
+          @click="copyRawText(rawText)"
+        >
+          Copy
+        </v-btn>
+      </div>
       <pre class="raw-view-content">{{ rawText }}</pre>
     </div>
 
