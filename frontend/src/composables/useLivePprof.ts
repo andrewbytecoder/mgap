@@ -1,296 +1,15 @@
-import { computed, onBeforeUnmount, reactive, watch } from 'vue'
-import { wailsApi } from '@/wails'
-import { appendGraphData, filterGraphDataByMinutes, importedGraphData, importedTimelineGraphData, newGraphData } from '@/utils/graph'
-import { loadPreferences, savePreferences } from '@/services/preferences'
-import type { EndpointResult, FlamegraphNode, GraphData, MetricInfo, MetricKey, Preferences, ProfileCatalogEntry, ProfileMeta } from '@/types'
-
-const metricKeys: MetricKey[] = ['cpu', 'heap', 'allocs', 'goroutine', 'block', 'mutex', 'threadcreate']
-
-interface State {
-  ready: boolean
-  loadingDetect: boolean
-  recording: boolean
-  busyMetrics: Record<MetricKey, boolean>
-  error: string
-  detectResults: EndpointResult[]
-  profileCatalog: ProfileCatalogEntry[]
-  loadingProfiles: boolean
-  profileRawText: string
-  profileFlamegraph: FlamegraphNode | null
-  graphData: Record<MetricKey, GraphData>
-  profileMeta: Record<MetricKey, ProfileMeta>
-  preferences: Preferences
-  metricInfo: MetricInfo[]
-  appInfo: Record<string, string>
-}
-
-let timer: number | undefined
-let recordingSession = 0
+import { computed, onBeforeUnmount, watch } from 'vue'
+import { useLivePprofStore } from '@/stores/livePprof'
+import { savePreferences } from '@/services/preferences'
+import type { MetricKey } from '@/types'
 
 export function useLivePprof() {
-  const state = reactive<State>({
-    ready: false,
-    loadingDetect: false,
-    recording: false,
-    busyMetrics: {
-      cpu: false,
-      heap: false,
-      allocs: false,
-      goroutine: false,
-      block: false,
-      mutex: false,
-      threadcreate: false
-    },
-    error: '',
-    detectResults: [],
-    profileCatalog: [],
-    loadingProfiles: false,
-    profileRawText: '',
-    profileFlamegraph: null,
-    graphData: {
-      cpu: newGraphData(),
-      heap: newGraphData(),
-      allocs: newGraphData(),
-      goroutine: newGraphData(),
-      block: newGraphData(),
-      mutex: newGraphData(),
-      threadcreate: newGraphData()
-    },
-    profileMeta: {
-      cpu: { metric: 'cpu', source: '', fileName: '', imported: false, exportable: false },
-      heap: { metric: 'heap', source: '', fileName: '', imported: false, exportable: false },
-      allocs: { metric: 'allocs', source: '', fileName: '', imported: false, exportable: false },
-      goroutine: { metric: 'goroutine', source: '', fileName: '', imported: false, exportable: false },
-      block: { metric: 'block', source: '', fileName: '', imported: false, exportable: false },
-      mutex: { metric: 'mutex', source: '', fileName: '', imported: false, exportable: false },
-      threadcreate: { metric: 'threadcreate', source: '', fileName: '', imported: false, exportable: false }
-    },
-    preferences: loadPreferences('http://localhost:6060/debug/pprof'),
-    metricInfo: [],
-    appInfo: {}
-  })
+  const store = useLivePprofStore()
+  let timer: number | undefined
 
-  const enabledMetrics = computed(() =>
-    state.metricInfo.filter((item): item is MetricInfo & { key: MetricKey } => isMetricKey(item.key) && state.preferences.metrics[item.key].enabled)
-  )
-  const hasEndpointError = computed(() => !state.preferences.endpointInput.trim())
-
-  async function bootstrap() {
-    try {
-      const [initialURL, metricInfo, appInfo, cpuMeta, heapMeta, allocsMeta, goroutineMeta, blockMeta, mutexMeta, threadMeta] = await Promise.all([
-        wailsApi.initialURL(),
-        wailsApi.availableMetrics(),
-        wailsApi.appInfo(),
-        wailsApi.profileMeta('cpu'),
-        wailsApi.profileMeta('heap'),
-        wailsApi.profileMeta('allocs'),
-        wailsApi.profileMeta('goroutine'),
-        wailsApi.profileMeta('block'),
-        wailsApi.profileMeta('mutex'),
-        wailsApi.profileMeta('threadcreate')
-      ])
-      state.metricInfo = metricInfo
-      state.appInfo = appInfo
-      state.profileMeta = {
-        cpu: cpuMeta,
-        heap: heapMeta,
-        allocs: allocsMeta,
-        goroutine: goroutineMeta,
-        block: blockMeta,
-        mutex: mutexMeta,
-        threadcreate: threadMeta
-      }
-      state.preferences = loadPreferences(initialURL)
-      state.ready = true
-      if (state.preferences.endpointInput.trim()) {
-        await detectEndpoints()
-        await refreshProfileCatalog()
-      }
-    } catch (error) {
-      state.error = toMessage(error)
-      state.ready = true
-    }
-  }
-
-  async function detectEndpoints() {
-    state.loadingDetect = true
-    state.error = ''
-    try {
-      state.detectResults = await wailsApi.detectURL(state.preferences.endpointInput)
-    } catch (error) {
-      state.error = toMessage(error)
-      state.detectResults = []
-    } finally {
-      state.loadingDetect = false
-    }
-  }
-
-  async function refreshProfileCatalog() {
-    if (!state.preferences.endpointInput.trim()) return
-    state.loadingProfiles = true
-    try {
-      state.profileCatalog = await wailsApi.fetchProfileCatalog(state.preferences.endpointInput)
-    } catch (error) {
-      state.error = `Profiles: ${toMessage(error)}`
-      state.profileCatalog = []
-    } finally {
-      state.loadingProfiles = false
-    }
-  }
-
-  function clearData() {
-    state.graphData = {
-      cpu: newGraphData(),
-      heap: newGraphData(),
-      allocs: newGraphData(),
-      goroutine: newGraphData(),
-      block: newGraphData(),
-      mutex: newGraphData(),
-      threadcreate: newGraphData()
-    }
-  }
-
-  function stopRecording() {
-    state.recording = false
-    recordingSession += 1
-    if (timer) {
-      window.clearTimeout(timer)
-      timer = undefined
-    }
-  }
-
-  async function sampleMetric(metric: MetricKey, sessionId: number) {
-    if (state.busyMetrics[metric]) return
-
-    const profileSeconds = metric === 'cpu' ? state.preferences.cpuProfileSeconds : 1
-    state.busyMetrics[metric] = true
-    try {
-      const snapshot = await wailsApi.fetchMetrics(
-        state.preferences.endpointInput,
-        metric,
-        profileSeconds,
-        state.preferences.useMock
-      )
-      if (!state.recording || sessionId !== recordingSession) return
-      state.graphData[metric] = appendGraphData(
-        state.graphData[metric],
-        snapshot,
-        metric,
-        state.preferences.metrics[metric].topN,
-        state.preferences.retainedSamples,
-        state.preferences.cpuProfileSeconds
-      )
-      state.profileMeta[metric] = await wailsApi.profileMeta(metric)
-    } catch (error) {
-      if (!state.recording || sessionId !== recordingSession) return
-      state.error = `${metric.toUpperCase()}: ${toMessage(error)}`
-    } finally {
-      state.busyMetrics[metric] = false
-    }
-  }
-
-  async function importProfile(metric: MetricKey) {
-    state.error = ''
-    try {
-      const snapshots = await wailsApi.importProfiles(metric)
-      if (!snapshots || snapshots.length === 0) return
-      state.graphData[metric] =
-        snapshots.length === 1
-          ? importedGraphData(snapshots[0], metric, state.preferences.cpuProfileSeconds)
-          : importedTimelineGraphData(
-              snapshots,
-              metric,
-              state.preferences.metrics[metric].topN,
-              state.preferences.retainedSamples,
-              state.preferences.cpuProfileSeconds
-            )
-      state.profileMeta[metric] = await wailsApi.profileMeta(metric)
-      state.preferences.metrics[metric].enabled = true
-    } catch (error) {
-      state.error = `${metric.toUpperCase()} import: ${toMessage(error)}`
-    }
-  }
-
-  async function exportProfile(metric: MetricKey) {
-    state.error = ''
-    try {
-      await wailsApi.exportProfile(metric)
-      state.profileMeta[metric] = await wailsApi.profileMeta(metric)
-    } catch (error) {
-      state.error = `${metric.toUpperCase()} export: ${toMessage(error)}`
-    }
-  }
-
-  async function openProfileText(profile: string, debug: number) {
-    state.error = ''
-    state.profileFlamegraph = null
-    try {
-      state.profileRawText = await wailsApi.fetchProfileText(
-        state.preferences.endpointInput,
-        profile,
-        debug,
-        state.preferences.cpuProfileSeconds
-      )
-    } catch (error) {
-      state.error = `${profile} text: ${toMessage(error)}`
-    }
-  }
-
-  async function downloadProfile(profile: string, debug: number) {
-    state.error = ''
-    try {
-      await wailsApi.downloadProfile(
-        state.preferences.endpointInput,
-        profile,
-        debug,
-        state.preferences.cpuProfileSeconds
-      )
-    } catch (error) {
-      state.error = `${profile} download: ${toMessage(error)}`
-    }
-  }
-
-  async function openProfileFlamegraph(profile: string) {
-    state.error = ''
-    state.profileRawText = ''
-    try {
-      state.profileFlamegraph = await wailsApi.getProfileFlamegraph(
-        state.preferences.endpointInput,
-        profile,
-        state.preferences.cpuProfileSeconds
-      )
-    } catch (error) {
-      state.error = `${profile} flamegraph: ${toMessage(error)}`
-    }
-  }
-
-  async function tick() {
-    if (!state.recording) return
-    state.error = ''
-    const sessionId = recordingSession
-
-    const metrics = enabledMetrics.value.map(item => item.key)
-    await Promise.all(metrics.map(metric => sampleMetric(metric, sessionId)))
-
-    if (!state.recording || sessionId !== recordingSession) return
-    timer = window.setTimeout(() => {
-      void tick()
-    }, state.preferences.sampleInterval)
-  }
-
-  function startRecording() {
-    stopRecording()
-    clearData()
-    recordingSession += 1
-    if (state.preferences.sampleInterval < state.preferences.cpuProfileSeconds * 1000) {
-      state.preferences.sampleInterval = state.preferences.cpuProfileSeconds * 1000
-    }
-    state.recording = true
-    void tick()
-  }
-
+  // 生命周期：watch preferences 持久化
   watch(
-    () => state.preferences,
+    () => store.preferences,
     value => {
       savePreferences(value)
     },
@@ -301,39 +20,53 @@ export function useLivePprof() {
     stopRecording()
   })
 
+  async function tick() {
+    if (!store.recording) return
+    store.error = ''
+    const sessionId = store.recordingSession
+    const metrics = store.enabledMetrics.map(item => item.key)
+    await Promise.all(metrics.map(metric => store.sampleMetric(metric, sessionId)))
+    if (!store.recording || sessionId !== store.recordingSession) return
+    timer = window.setTimeout(() => {
+      void tick()
+    }, store.preferences.sampleInterval)
+  }
+
+  function startRecording() {
+    stopRecording()
+    store.clearData()
+    store.recordingSession += 1
+    if (store.preferences.sampleInterval < store.preferences.cpuProfileSeconds * 1000) {
+      store.preferences.sampleInterval = store.preferences.cpuProfileSeconds * 1000
+    }
+    store.recording = true
+    void tick()
+  }
+
+  function stopRecording() {
+    store.recording = false
+    store.recordingSession += 1
+    if (timer) {
+      window.clearTimeout(timer)
+      timer = undefined
+    }
+  }
+
   return {
-    state,
-    enabledMetrics,
-    hasEndpointError,
-    filteredGraphData: computed(() => ({
-      cpu: filterGraphDataByMinutes(state.graphData.cpu, state.preferences.timeRangeMinutes),
-      heap: filterGraphDataByMinutes(state.graphData.heap, state.preferences.timeRangeMinutes),
-      allocs: filterGraphDataByMinutes(state.graphData.allocs, state.preferences.timeRangeMinutes),
-      goroutine: filterGraphDataByMinutes(state.graphData.goroutine, state.preferences.timeRangeMinutes),
-      block: filterGraphDataByMinutes(state.graphData.block, state.preferences.timeRangeMinutes),
-      mutex: filterGraphDataByMinutes(state.graphData.mutex, state.preferences.timeRangeMinutes),
-      threadcreate: filterGraphDataByMinutes(state.graphData.threadcreate, state.preferences.timeRangeMinutes)
-    })),
-    bootstrap,
-    detectEndpoints,
-    refreshProfileCatalog,
+    state: store,
+    enabledMetrics: computed(() => store.enabledMetrics),
+    hasEndpointError: computed(() => store.hasEndpointError),
+    filteredGraphData: computed(() => store.filteredGraphData),
+    bootstrap: store.bootstrap,
+    detectEndpoints: store.detectEndpoints,
+    refreshProfileCatalog: store.refreshProfileCatalog,
     startRecording,
     stopRecording,
-    clearData,
-    importProfile,
-    exportProfile,
-    openProfileText,
-    downloadProfile,
-    openProfileFlamegraph
+    clearData: store.clearData,
+    importProfile: store.importProfile,
+    exportProfile: store.exportProfile,
+    openProfileText: store.openProfileText,
+    downloadProfile: store.downloadProfile,
+    openProfileFlamegraph: store.openProfileFlamegraph
   }
-}
-
-function toMessage(error: unknown): string {
-  if (error instanceof Error) return error.message
-  if (typeof error === 'string') return error
-  return 'Unknown error'
-}
-
-function isMetricKey(value: string): value is MetricKey {
-  return metricKeys.includes(value as MetricKey)
 }
